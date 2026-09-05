@@ -1,0 +1,13 @@
+{
+  "free": [
+    {"name": "UK", "flag": "🇬🇧", "uri": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo4TFkydTJDNjQxcHlvdmM1UXAzcGt6@194.164.22.64:45571/#UK", "premium": false},
+    {"name": "WarpGuard", "flag": "🌐", "uri": "vless://warp@162.159.192.1:2408#WarpGuard", "premium": false}
+  ],
+  "premium": [
+    {"name": "Premium US", "flag": "🇺🇸", "uri": "vless://premium@vortexhub.net:443#Premium-US", "premium": true},
+    {"name": "Premium UK", "flag": "🇬🇧", "uri": "vless://premium@vortexhub.net:443#Premium-UK", "premium": true}
+  ],
+  "warp": [
+    {"name": "WarpGuard Free", "flag": "🌐", "uri": "vless://warp@162.159.192.1:2408#WarpGuard", "premium": false}
+  ]
+}

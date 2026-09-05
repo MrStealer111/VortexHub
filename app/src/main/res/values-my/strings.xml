@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VPN Mobile</string>
+
+    <string name="nav_home">မူလ</string>
+    <string name="nav_servers">ဆာဗာများ</string>
+    <string name="nav_settings">ဆက်တင်</string>
+    <string name="import_server">ထည့်သွင်း</string>
+    <string name="back">နောက်သို့</string>
+    <string name="manage">စီမံ</string>
+    <string name="delete">ဖျက်</string>
+
+    <string name="status_connected">ချိတ်ဆက်ပြီး</string>
+    <string name="status_connecting">ချိတ်ဆက်နေသည်…</string>
+    <string name="status_disconnected">ချိတ်ဆက်မထား</string>
+    <string name="connect">ချိတ်ဆက်ရန်</string>
+    <string name="disconnect">ချိတ်ဆက်မှု ဖြုတ်</string>
+    <string name="connected_for">ချိတ်ဆက်ထားသည့် ကြာချိန် %1$s</string>
+
+    <string name="download">ဒေါင်းလုဒ်</string>
+    <string name="upload">အပ်လုဒ်</string>
+    <string name="last_handshake">နောက်ဆုံး handshake</string>
+    <string name="no_handshake_yet">handshake မရှိသေးပါ</string>
+    <string name="handshake_seconds_ago">%1$d စက္ကန့် အကြာက</string>
+    <string name="handshake_minutes_ago">%1$d မိနစ် အကြာက</string>
+
+    <string name="selected_server">ရွေးထားသော ဆာဗာ</string>
+    <string name="no_servers_title">ဆာဗာ မရှိသေးပါ</string>
+    <string name="no_servers_body">စတင်ရန် WireGuard ဆာဗာ profile တစ်ခု ထည့်ပါ။</string>
+    <string name="add_first_server">ဆာဗာ ထည့်ရန်</string>
+
+    <string name="grant_permission_title">VPN ခွင့်ပြုချက် လိုအပ်သည်</string>
+    <string name="grant_permission_body">ချိတ်ဆက်နိုင်ရန် VPN Mobile ကို လုံခြုံသော tunnel တစ်ခု ဖန်တီးခွင့်ပြုပါ။</string>
+    <string name="grant_permission">ခွင့်ပြုရန်</string>
+
+    <string name="import_title">ဆာဗာ ထည့်ရန်</string>
+    <string name="name_label">အမည်</string>
+    <string name="name_placeholder">ဥပမာ Singapore 01</string>
+    <string name="flag_label">Flag emoji (မလိုအပ်)</string>
+    <string name="flag_placeholder">🌐</string>
+    <string name="import_from_file">ဖိုင်မှ ထည့်သွင်း</string>
+    <string name="paste_config_title">သို့မဟုတ် WireGuard config ကူးထည့်ပါ</string>
+    <string name="config_placeholder">[Interface]\nPrivateKey = …\nAddress = 10.0.0.2/32\n\n[Peer]\nPublicKey = …\nEndpoint = vpn.example.com:51820\nAllowedIPs = 0.0.0.0/0</string>
+    <string name="save">သိမ်းမည်</string>
+
+    <string name="settings_title">ဆက်တင်</string>
+    <string name="auto_connect_title">Auto-connect</string>
+    <string name="auto_connect_desc">အက်ပ်ဖွင့်သည့်အခါ နောက်ဆုံးဆာဗာသို့ အလိုအလျောက် ချိတ်ဆက်ပါ။</string>
+    <string name="kill_switch_title">Kill switch</string>
+    <string name="kill_switch_desc">Traffic အားလုံးကို VPN မှတစ်ဆင့် ပို့ပြီး tunnel ပြတ်လျှင် အားလုံး ပိတ်ပင်ပါ။</string>
+
+    <string name="about">အကြောင်း</string>
+    <string name="app_version">အက်ပ် ဗားရှင်း</string>
+    <string name="backend_version">WireGuard backend</string>
+    <string name="security_note">သင့် WireGuard config သည် သင့်ဖုန်းပေါ်တွင်သာ ရှိပြီး ဘယ်နေရာကိုမှ တင်ပို့ခြင်း မရှိပါ။</string>
+
+    <string name="server_connected">ချိတ်ဆက်ပြီးပါပြီ: %1$s</string>
+    <string name="server_removed">ဆာဗာ ဖျက်ပြီးပြီ</string>
+    <string name="config_imported">ဆာဗာ ထည့်ပြီးပြီ</string>
+
+    <string name="error_dns">ဆာဗာ လိပ်စာကို ဖော်ထုတ်၍မရပါ။ Endpoint နှင့် သင့်ချိတ်ဆက်မှုကို စစ်ပါ။</string>
+    <string name="error_tun">VPN tunnel ဖန်တီး၍မရပါ။</string>
+    <string name="error_start">VPN ဝန်ဆောင်မှုကို စတင်၍မရပါ။</string>
+    <string name="error_permission_denied">VPN ခွင့်ပြုချက်ကို ငြင်းပယ်ခဲ့သည်။</string>
+    <string name="error_unknown">တစ်ခုခု မှားယွင်းသွားသည်: %1$s</string>
+</resources>

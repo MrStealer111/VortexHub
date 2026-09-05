@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VortexHub</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_servers">Servers</string>
+    <string name="nav_settings">Settings</string>
+    <string name="import_server">Import</string>
+    <string name="back">Back</string>
+    <string name="manage">Manage</string>
+    <string name="delete">Delete</string>
+
+    <string name="status_connected">Connected</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="connected_for">Connected for %1$s</string>
+    <string name="tap_to_connect">Tap to connect securely</string>
+
+    <string name="download">Download</string>
+    <string name="upload">Upload</string>
+    <string name="last_handshake">Last handshake</string>
+    <string name="no_handshake_yet">No handshake yet</string>
+    <string name="handshake_seconds_ago">%1$d s ago</string>
+    <string name="handshake_minutes_ago">%1$d m ago</string>
+
+    <string name="selected_server">Selected server</string>
+    <string name="no_servers_title">No servers yet</string>
+    <string name="no_servers_body">Add a WireGuard server profile to get started.</string>
+    <string name="add_first_server">Add server</string>
+
+    <string name="grant_permission_title">VPN permission required</string>
+    <string name="grant_permission_body">Allow VPN Mobile to create a secure tunnel so you can connect.</string>
+    <string name="grant_permission">Grant permission</string>
+
+    <string name="import_title">Add server</string>
+    <string name="name_label">Name</string>
+    <string name="name_placeholder">e.g. Singapore 01</string>
+    <string name="flag_label">Flag emoji (optional)</string>
+    <string name="flag_placeholder">🌐</string>
+    <string name="import_from_file">Import from file</string>
+    <string name="paste_config_title">Or paste a WireGuard config</string>
+    <string name="config_placeholder">[Interface]\nPrivateKey = …\nAddress = 10.0.0.2/32\n\n[Peer]\nPublicKey = …\nEndpoint = vpn.example.com:51820\nAllowedIPs = 0.0.0.0/0</string>
+    <string name="save">Save</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="auto_connect_title">Auto-connect</string>
+    <string name="auto_connect_desc">Connect to the last server when the app opens.</string>
+    <string name="kill_switch_title">Kill switch</string>
+    <string name="kill_switch_desc">Route all traffic through the VPN and block everything when the tunnel drops.</string>
+
+    <string name="about">About</string>
+    <string name="app_version">App version</string>
+    <string name="backend_version">WireGuard backend</string>
+    <string name="security_note">Your WireGuard config stays on this device and is never uploaded anywhere.</string>
+
+    <string name="server_connected">Connected to %1$s</string>
+    <string name="server_removed">Server removed</string>
+    <string name="config_imported">Server added</string>
+
+    <string name="error_dns">Could not resolve the server address. Check the endpoint and your connection.</string>
+    <string name="error_tun">Could not create the VPN tunnel.</string>
+    <string name="error_start">Could not start the VPN service.</string>
+    <string name="error_permission_denied">VPN permission was denied.</string>
+    <string name="error_unknown">Something went wrong: %1$s</string>
+</resources>
