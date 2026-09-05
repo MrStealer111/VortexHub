@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VPN Mobile - Premium UI Preview</title>
+<title>VortexHub VPN - Premium UI Preview</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#060b18;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;min-height:100vh;padding:20px;gap:24px;flex-wrap:wrap}
@@ -11,34 +11,34 @@ body{background:#060b18;color:#fff;font-family:-apple-system,BlinkMacSystemFont,
 .phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:28px;background:#000;border-radius:0 0 18px 18px;z-index:10}
 .statusbar{display:flex;justify-content:space-between;padding:14px 28px 8px;font-size:12px;color:#8EA0C2;font-weight:600}
 .screen{padding:0 20px 20px}
-.pill{display:flex;align-items:center;gap:6px;background:rgba(16,185,129,.12);border-radius:999px;padding:7px 14px;width:fit-content;margin:8px auto;font-size:11px;color:#10B981;letter-spacing:.5px;font-weight:700}
+.pill{display:flex;align-items:center;gap:6px;background:rgba(255,140,0,.12);border-radius:999px;padding:7px 14px;width:fit-content;margin:8px auto;font-size:11px;color:#FF8C00;letter-spacing:.5px;font-weight:700}
 .pill.off{background:rgba(142,160,194,.12);color:#8EA0C2}
 .dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
 .connect-wrap{position:relative;width:216px;height:216px;margin:14px auto;display:flex;align-items:center;justify-content:center}
-.glow{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.28) 0%,transparent 70%);filter:blur(8px);animation:pulse 1.8s infinite alternate}
-.glow2{position:absolute;inset:16px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.15) 0%,transparent 70%);filter:blur(6px)}
+.glow{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,140,0,.28) 0%,transparent 70%);filter:blur(8px);animation:pulse 1.8s infinite alternate}
+.glow2{position:absolute;inset:16px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,0,.15) 0%,transparent 70%);filter:blur(6px)}
 @keyframes pulse{from{transform:scale(.92);opacity:.7}to{transform:scale(1.06);opacity:1}}
-.outer{width:200px;height:200px;border-radius:50%;background:linear-gradient(135deg,#10B981,#06B6D4,#3B82F6);padding:2px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.outer{width:200px;height:200px;border-radius:50%;background:linear-gradient(135deg,#FF8C00,#FF6B00,#FF4500);padding:2px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .outer.off{background:linear-gradient(135deg,#1B2540,#162040)}
 .inner{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 20%,#162040,#070E1F);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
-.icon{width:52px;height:52px;border-radius:50%;background:rgba(16,185,129,.14);display:flex;align-items:center;justify-content:center;font-size:22px}
+.icon{width:52px;height:52px;border-radius:50%;background:rgba(255,140,0,.14);display:flex;align-items:center;justify-content:center;font-size:22px}
 .icon.off{background:rgba(255,255,255,.04);color:#8EA0C2}
 .label{font-weight:800;letter-spacing:.8px;font-size:13px}
-.label.on{color:#10B981}
+.label.on{color:#FF8C00}
 .label.off{color:#E8EEF9}
 .tap{font-size:10px;letter-spacing:1.4px;color:#5B6B8A;font-weight:700}
 .status{font-size:22px;font-weight:800;text-align:center;margin-top:4px}
-.status.on{color:#10B981}
+.status.on{color:#FF8C00}
 .status.off{color:#E8EEF9}
 .sub{font-size:12px;color:#8EA0C2;text-align:center;margin-top:2px;display:flex;gap:6px;justify-content:center;align-items:center}
 .card{background:#121D36;border:1px solid #24324F;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-top:14px}
-.card.success{border-color:rgba(16,185,129,.35);box-shadow:0 8px 24px rgba(16,185,129,.12)}
+.card.success{border-color:rgba(255,140,0,.35);box-shadow:0 8px 24px rgba(255,140,0,.12)}
 .flag{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#1E2F56,#162040);display:flex;align-items:center;justify-content:center;font-size:22px}
 .info{flex:1}
 .info span{font-size:10px;color:#8EA0C2;letter-spacing:.6px;font-weight:700}
 .info b{font-size:14px;display:block;color:#fff}
 .info small{font-size:11px;color:#5B6B8A}
-.manage{background:rgba(34,211,238,.14);color:#22D3EE;font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px}
+.manage{background:rgba(255,140,0,.14);color:#FF8C00;font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px}
 .stats{display:flex;gap:10px;margin-top:12px}
 .stat{flex:1;background:#121D36;border:1px solid #24324F;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
 .stat-top{font-size:10px;letter-spacing:.8px;color:#8EA0C2;font-weight:700;display:flex;align-items:center;gap:6px}
@@ -48,55 +48,293 @@ body{background:#060b18;color:#fff;font-family:-apple-system,BlinkMacSystemFont,
 .secure{margin-top:8px;background:linear-gradient(90deg,#0A2E22,#0F3A2E);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:11px;color:#34D399;font-weight:600}
 .bottom{display:flex;justify-content:space-around;padding:12px 0 18px;border-top:1px solid #1E2D4A;margin-top:12px;background:#0B1220}
 .nav{font-size:10px;color:#5B6B8A;text-align:center;flex:1}
-.nav.active{color:#22D3EE}
-.nav b{display:block;font-size:11px;margin-top:2px}
-.servers{padding:12px 16px}
-.srv{background:#121D36;border:1px solid #1E2D4A;border-radius:18px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.srv.active{border-color:rgba(34,211,238,.5);background:#162040}
-.ping{background:rgba(16,185,129,.12);color:#10B981;font-size:10px;font-weight:700;padding:3px 7px;border-radius:999px;display:inline-flex;gap:4px;align-items:center}
-.play{width:36px;height:36px;border-radius:50%;background:rgba(34,211,238,.12);display:flex;align-items:center;justify-content:center;color:#22D3EE}
-h3{font-size:13px;font-weight:800;margin:14px 0 8px;color:#fff}
+.nav.active{color:#FF8C00}
+.nav-icon{font-size:18px;margin-bottom:4px}
+h2{font-size:20px;font-weight:800;margin:12px 0 4px;color:#fff}
+.subtext{font-size:12px;color:#8EA0C2;margin-bottom:12px}
+.tab-bar{display:flex;gap:8px;margin-bottom:16px}
+.tab{padding:8px 16px;border-radius:999px;font-size:12px;font-weight:700;background:#121D36;color:#8EA0C2;border:1px solid #24324F}
+.tab.active{background:linear-gradient(135deg,#FF8C00,#FF6B00);color:#fff;border-color:transparent}
+.server-item{background:#121D36;border:1px solid #24324F;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.server-item.selected{border-color:rgba(255,140,0,.5);box-shadow:0 0 20px rgba(255,140,0,.1)}
+.ping{font-size:11px;color:#FF8C00;font-weight:700;background:rgba(255,140,0,.12);padding:4px 8px;border-radius:8px}
+.star{color:#FFD700;font-size:16px}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #1E2D4A}
+.setting-label{font-size:14px;font-weight:600;color:#fff}
+.setting-desc{font-size:11px;color:#8EA0C2;margin-top:2px}
+.toggle{width:44px;height:24px;border-radius:12px;background:#2C2C2E;position:relative;cursor:pointer}
+.toggle.on{background:#FF8C00}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.toggle.on::after{left:22px}
+.profile-card{background:#121D36;border:1px solid #24324F;border-radius:16px;padding:16px;margin-bottom:12px}
+.profile-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.profile-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#FF8C00,#FF6B00);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff}
+.profile-name{font-size:16px;font-weight:700;color:#fff}
+.profile-id{font-size:11px;color:#8EA0C2}
+.key-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0B1220;border-radius:10px;margin-top:8px}
+.key-label{font-size:11px;color:#8EA0C2}
+.key-value{font-size:12px;color:#fff;font-weight:600;font-family:monospace}
+.copy-btn{background:rgba(255,140,0,.14);color:#FF8C00;border:none;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
-<!-- HOME - CONNECTED -->
+
+<!-- Home Screen - Connected -->
 <div class="phone">
-<div class="statusbar"><span>9:41</span><span>● ● ●</span></div>
-<div class="screen">
-<div class="pill"><span class="dot"></span> CONNECTED <span>🛡️</span></div>
-<div class="connect-wrap"><div class="glow"></div><div class="glow2"></div><div class="outer"><div class="inner"><div class="icon">⏻</div><div class="label on">DISCONNECT</div></div></div></div>
-<div class="status on">Connected</div>
-<div class="sub">Connected for 12m 34s</div>
-<div class="sub">🇸🇬 Singapore 01 🛡️</div>
-<div class="card success"><div class="flag">🇸🇬</div><div class="info"><span>SELECTED SERVER</span><b>Singapore 01</b><small>sg1.vpn.example.com:51820</small></div><div class="manage">Manage</div></div>
-<div class="stats"><div class="stat"><div class="stat-top"><span class="badge" style="background:rgba(34,211,238,.14);color:#22D3EE">↓</span> DOWNLOAD</div><div class="val">248.4 MB</div></div><div class="stat"><div class="stat-top"><span class="badge" style="background:rgba(16,185,129,.14);color:#10B981">↑</span> UPLOAD</div><div class="val">42.1 MB</div></div></div>
-<div class="handshake"><span style="width:6px;height:6px;background:#10B981;border-radius:50%"></span> Last handshake: 24s ago</div>
-<div class="secure">🛡️ Traffic encrypted • IP hidden • Kill-switch active</div>
-<div class="bottom"><div class="nav active">⌂<b>Home</b></div><div class="nav">≡<b>Servers</b></div><div class="nav">⚙<b>Settings</b></div></div>
-</div></div>
-<!-- HOME - DISCONNECTED -->
-<div class="phone">
-<div class="statusbar"><span>9:41</span><span>● ● ●</span></div>
-<div class="screen">
-<div class="pill off"><span class="dot"></span> DISCONNECTED</div>
-<div class="connect-wrap"><div class="outer off"><div class="inner"><div class="icon off">⏻</div><div class="label off">CONNECT</div><div class="tap">TAP</div></div></div></div>
-<div class="status off">Disconnected</div>
-<div class="sub" style="color:#5B6B8A">Tap to connect securely</div>
-<div class="card"><div class="flag">🇯🇵</div><div class="info"><span>SELECTED SERVER</span><b>Japan 02</b><small>jp2.vpn.example.com:51820</small></div><div class="manage">Manage</div></div>
-<div class="card" style="background:#2A1A1E;border-color:rgba(251,113,133,.35)"><div style="flex:1"><b style="color:#FECACA;font-size:13px">VPN permission required</b><small style="color:rgba(254,202,202,.78)">Allow VPN Mobile to create a secure tunnel</small><div style="margin-top:10px;background:#FB7185;color:#fff;text-align:center;padding:10px;border-radius:12px;font-weight:800;font-size:13px">Grant permission</div></div></div>
-<div class="bottom"><div class="nav active">⌂<b>Home</b></div><div class="nav">≡<b>Servers</b></div><div class="nav">⚙<b>Settings</b></div></div>
-</div></div>
-<!-- SERVERS -->
-<div class="phone">
-<div class="statusbar"><span>9:41</span><span>● ● ●</span></div>
-<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center"><b>Servers</b><span style="background:#22D3EE;color:#04242E;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800">+</span></div>
-<div class="servers">
-<div style="background:#121D36;border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;font-size:10px;color:#8EA0C2;font-weight:700"><span>3 SERVERS</span><span style="color:#10B981">● All encrypted</span></div>
-<div class="srv active"><div class="flag">🇸🇬</div><div class="info" style="flex:1"><b style="font-size:13px">Singapore 01 <span style="color:#10B981">✓</span> <span style="background:rgba(34,211,238,.14);color:#22D3EE;font-size:8px;padding:2px 6px;border-radius:999px">ACTIVE</span></b><small>sg1.vpn.example.com:51820</small><div style="margin-top:4px"><span class="ping">▂ 24ms</span> <small style="font-size:10px;color:#3E4F6A">WireGuard</small></div></div><div class="play">▶</div></div>
-<div class="srv"><div class="flag">🇯🇵</div><div class="info" style="flex:1"><b style="font-size:13px">Japan 02</b><small>jp2.vpn.example.com:51820</small><div style="margin-top:4px"><span class="ping" style="background:rgba(34,211,238,.12);color:#22D3EE">▂ 48ms</span> <small style="font-size:10px;color:#3E4F6A">WireGuard</small></div></div><div class="play">▶</div></div>
-<div class="srv"><div class="flag">🇺🇸</div><div class="info" style="flex:1"><b style="font-size:13px">US West 01</b><small>us-west.vpn.example.com:51820</small><div style="margin-top:4px"><span class="ping" style="background:rgba(251,191,36,.12);color:#FBBF24">▂ 132ms</span> <small style="font-size:10px;color:#3E4F6A">WireGuard</small></div></div><div class="play">▶</div></div>
+  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
+  <div class="screen">
+    <div style="text-align:center;margin-bottom:8px">
+      <div style="font-size:24px;font-weight:900;color:#FF8C00;letter-spacing:1px">VORTEXHUB</div>
+      <div style="font-size:11px;color:#8EA0C2;letter-spacing:.5px">Premium VPN</div>
+    </div>
+    
+    <div class="pill"><div class="dot"></div>CONNECTED</div>
+    
+    <div class="connect-wrap">
+      <div class="glow"></div>
+      <div class="glow2"></div>
+      <div class="outer">
+        <div class="inner">
+          <div class="icon">⚡</div>
+          <div class="label on">CONNECTED</div>
+          <div class="tap">TAP TO DISCONNECT</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="status on">🔒 Encrypted</div>
+    <div class="sub">🛡️ AES-256 • Xray Core</div>
+    
+    <div class="card success">
+      <div class="flag">🇬🇧</div>
+      <div class="info">
+        <span>UK - LONDON</span>
+        <b>Shields Double VPN</b>
+        <small>Server #1 • 23ms latency</small>
+      </div>
+      <div class="manage">Active</div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-top"><div class="badge" style="background:rgba(16,185,129,.15);color:#10B981">↓</div> Download</div>
+        <div class="val">2.4 GB</div>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><div class="badge" style="background:rgba(59,130,246,.15);color:#3B82F6">↑</div> Upload</div>
+        <div class="val">856 MB</div>
+      </div>
+    </div>
+    
+    <div class="handshake">🕐 Session: 2h 34m • Last handshake: 5s ago</div>
+    <div class="secure">🛡️ Kill Switch Active • DNS: 1.1.1.1</div>
+    
+    <div class="bottom">
+      <div class="nav active"><div class="nav-icon">🏠</div>Home</div>
+      <div class="nav"><div class="nav-icon">⚙️</div>Configs</div>
+      <div class="nav"><div class="nav-icon">👤</div>Person</div>
+    </div>
+  </div>
 </div>
-<div class="bottom"><div class="nav">⌂<b>Home</b></div><div class="nav active">≡<b>Servers</b></div><div class="nav">⚙<b>Settings</b></div></div>
+
+<!-- Servers Screen -->
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
+  <div class="screen">
+    <h2>Configs</h2>
+    <div class="subtext">Manage your VPN servers</div>
+    
+    <div class="tab-bar">
+      <div class="tab active">Free</div>
+      <div class="tab">Favorites</div>
+      <div class="tab">Personal</div>
+    </div>
+    
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:12px;color:#8EA0C2">3 servers available</div>
+      <div style="display:flex;gap:8px">
+        <div style="background:#FF8C00;color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700">+ Add</div>
+        <div style="background:#121D36;color:#8EA0C2;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid #24324F">📡 QR</div>
+      </div>
+    </div>
+    
+    <div class="server-item selected">
+      <div class="flag">🇬🇧</div>
+      <div class="info" style="flex:1">
+        <span>SHIELDS DOUBLE VPN</span>
+        <b>UK - London</b>
+        <small>Shadowsocks • Xray Core</small>
+      </div>
+      <div class="ping">23ms</div>
+      <div class="star">★</div>
+    </div>
+    
+    <div class="server-item">
+      <div class="flag">🇺🇸</div>
+      <div class="info" style="flex:1">
+        <span>WIREGUARD FREE</span>
+        <b>US - New York</b>
+        <small>WireGuard • WARP</small>
+      </div>
+      <div class="ping">45ms</div>
+      <div class="star" style="color:#5B6B8A">☆</div>
+    </div>
+    
+    <div class="server-item">
+      <div class="flag">🇩🇪</div>
+      <div class="info" style="flex:1">
+        <span>PREMIUM SERVER</span>
+        <b>Germany - Frankfurt</b>
+        <small>VLESS • Xray Core</small>
+      </div>
+      <div class="ping">38ms</div>
+      <div class="star" style="color:#5B6B8A">☆</div>
+    </div>
+    
+    <div class="server-item">
+      <div class="flag">🇯🇵</div>
+      <div class="info" style="flex:1">
+        <span>LOW LATENCY</span>
+        <b>Japan - Tokyo</b>
+        <small>VMess • Xray Core</small>
+      </div>
+      <div class="ping">67ms</div>
+      <div class="star" style="color:#5B6B8A">☆</div>
+    </div>
+    
+    <div style="background:#121D36;border:1px solid #24324F;border-radius:12px;padding:12px;margin-top:12px;display:flex;align-items:center;gap:10px">
+      <div style="font-size:20px">⚡</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;color:#FF8C00">Auto-Select Best Server</div>
+        <div style="font-size:11px;color:#8EA0C2">Ping all servers and connect to fastest</div>
+      </div>
+    </div>
+    
+    <div class="bottom">
+      <div class="nav"><div class="nav-icon">🏠</div>Home</div>
+      <div class="nav active"><div class="nav-icon">⚙️</div>Configs</div>
+      <div class="nav"><div class="nav-icon">👤</div>Person</div>
+    </div>
+  </div>
 </div>
+
+<!-- Settings Screen -->
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
+  <div class="screen">
+    <h2>Settings</h2>
+    <div class="subtext">VPN & Network Configuration</div>
+    
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Auto-Connect</div>
+        <div class="setting-desc">Connect on app start</div>
+      </div>
+      <div class="toggle on"></div>
+    </div>
+    
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Auto-Reconnect</div>
+        <div class="setting-desc">Retry on connection drop</div>
+      </div>
+      <div class="toggle on"></div>
+    </div>
+    
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Kill Switch</div>
+        <div class="setting-desc">Block internet when VPN drops</div>
+      </div>
+      <div class="toggle on"></div>
+    </div>
+    
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Split Tunneling</div>
+        <div class="setting-desc">Route specific apps through VPN</div>
+      </div>
+      <div class="toggle"></div>
+    </div>
+    
+    <div style="background:#121D36;border:1px solid #24324F;border-radius:16px;padding:16px;margin-top:16px">
+      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">DNS Settings</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;background:linear-gradient(135deg,#FF8C00,#FF6B00);color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700">Cloudflare<br><span style="font-size:10px;opacity:.8">1.1.1.1</span></div>
+        <div style="flex:1;background:#1E2D4A;color:#8EA0C2;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700">Google<br><span style="font-size:10px;opacity:.8">8.8.8.8</span></div>
+      </div>
+    </div>
+    
+    <div style="background:#121D36;border:1px solid #24324F;border-radius:16px;padding:16px;margin-top:12px">
+      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:8px">About VortexHub</div>
+      <div style="font-size:12px;color:#8EA0C2">Version 1.0.0</div>
+      <div style="font-size:11px;color:#5B6B8A;margin-top:4px">Xray Core • WireGuard • WARP</div>
+    </div>
+    
+    <div class="bottom">
+      <div class="nav"><div class="nav-icon">🏠</div>Home</div>
+      <div class="nav"><div class="nav-icon">⚙️</div>Configs</div>
+      <div class="nav active"><div class="nav-icon">👤</div>Person</div>
+    </div>
+  </div>
+</div>
+
+<!-- Person Screen -->
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
+  <div class="screen">
+    <h2>VortexHub</h2>
+    <div class="subtext">My Keys • Update without rebuild</div>
+    
+    <div style="background:#121D36;border:1px solid #24324F;border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#fff">Device Hardware ID</div>
+      <div class="key-row" style="margin-top:8px">
+        <div class="key-value">a1b2c3d4e5f6g7h8</div>
+        <button class="copy-btn">📋 Copy</button>
+      </div>
+    </div>
+    
+    <div style="background:#121D36;border:1px solid #24324F;border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#fff">Free Server URL</div>
+      <div style="background:#0B1220;border-radius:8px;padding:10px;margin-top:8px;font-size:11px;color:#8EA0C2;font-family:monospace">https://raw.githubusercontent.com/...</div>
+      <button class="copy-btn" style="width:100%;margin-top:8px;padding:10px">Save & Refresh Free</button>
+    </div>
+    
+    <div style="background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,107,0,.12));border:1px solid rgba(255,140,0,.3);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:800;color:#fff">VortexHub Premium</div>
+      <div style="font-size:12px;color:#FF8C00;margin-top:4px">Unlock premium servers</div>
+      <div style="text-align:right;margin-top:8px;font-size:12px;font-weight:700;color:#FF8C00">Upgrade →</div>
+    </div>
+    
+    <div style="background:#121D36;border:1px solid #24324F;border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:#fff">Settings</div>
+      <div style="font-size:11px;color:#8EA0C2;margin-top:2px">VPN, DNS, Auto-connect</div>
+      <div style="text-align:right;margin-top:8px;font-size:14px;color:#8EA0C2">→</div>
+    </div>
+    
+    <div style="font-size:16px;font-weight:800;color:#fff;margin-top:16px">My Keys</div>
+    <div style="font-size:12px;color:#8EA0C2">2 configs saved (IP hidden)</div>
+    
+    <div class="profile-card" style="margin-top:12px">
+      <div class="profile-header">
+        <div class="flag" style="width:40px;height:40px;font-size:18px">🇬🇧</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#fff">UK - London Shield</div>
+          <div style="font-size:11px;color:#8EA0C2">Shadowsocks • Xray</div>
+        </div>
+        <button class="copy-btn" style="margin-left:auto">📋</button>
+        <button style="background:rgba(255,82,82,.14);color:#FF5252;border:none;padding:6px 10px;border-radius:8px;font-size:14px;cursor:pointer">🗑️</button>
+      </div>
+      <div style="background:#0B1220;border-radius:8px;padding:8px;font-size:11px;color:#5B6B8A;font-family:monospace">ss://aes-256-gcm:...@uk1.example.com:443</div>
+    </div>
+    
+    <div class="bottom">
+      <div class="nav"><div class="nav-icon">🏠</div>Home</div>
+      <div class="nav"><div class="nav-icon">⚙️</div>Configs</div>
+      <div class="nav active"><div class="nav-icon">👤</div>Person</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
