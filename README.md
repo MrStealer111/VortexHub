@@ -1,7 +1,7 @@
 # VortexHub — Premium Android VPN
 
 <p align="center">
-  <img src="preview.png" width="300" alt="VortexHub UI Preview">
+  <img src="ui_preview.png" width="800" alt="VortexHub UI Preview">
 </p>
 
 <p align="center">
@@ -12,11 +12,7 @@
 
 ## 🎨 UI Preview
 
-| Home Screen | Servers | Settings | Profile |
-|:---:|:---:|:---:|:---:|
-| ![Home](preview.html) | ![Servers](preview.html) | ![Settings](preview.html) | ![Profile](preview.html) |
-
-> **UI Preview:** Open `preview.html` in browser to see interactive mockup
+![VortexHub UI](ui_preview.png)
 
 ---
 
