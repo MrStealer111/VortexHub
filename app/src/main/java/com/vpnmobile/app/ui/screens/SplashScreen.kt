@@ -68,6 +68,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
             Box(
                 Modifier
                     .size(120.dp)
+                    .scale(scale)
                     .clip(CircleShape)
                     .background(Brush.linearGradient(listOf(Orange, Color(0xFFFF6B00)))),
                 contentAlignment = Alignment.Center
@@ -100,7 +101,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
 
             Text(
                 "Secure VPN",
-                color = Color(0xFF8E8E93),
+                color = Color(0xFF8E8E93).copy(alpha = alpha),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )

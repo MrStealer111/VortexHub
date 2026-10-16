@@ -33,6 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -110,7 +116,11 @@ fun VpnApp(
                 startDestination = Routes.HOME,
                 modifier = Modifier.padding(padding),
             ) {
-                composable(Routes.HOME) {
+                composable(
+                Routes.HOME,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     HomeScreen(
                         viewModel = viewModel,
                         needsPermission = needsPermission,
@@ -119,7 +129,11 @@ fun VpnApp(
                         onOpenServers = { navController.navigateTo(Routes.SERVERS) },
                     )
                 }
-                composable(Routes.SERVERS) {
+                composable(
+                Routes.SERVERS,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     ServersScreen(
                         viewModel = viewModel,
                         onConnect = onConnect,
@@ -128,36 +142,64 @@ fun VpnApp(
                         onQrScan = { navController.navigate(Routes.QR_SCAN) },
                     )
                 }
-                composable(Routes.IMPORT) {
+                composable(
+                Routes.IMPORT,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     ImportScreen(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
                         onWarpGenerate = { navController.navigate(Routes.WARP_GEN) },
                     )
                 }
-                composable(Routes.SETTINGS) {
+                composable(
+                Routes.SETTINGS,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     PersonScreen(
                         viewModel = viewModel,
                         onPremium = { navController.navigate(Routes.PREMIUM) },
                         onSettings = { navController.navigate(Routes.SETTINGS_SCREEN) }
                     )
                 }
-                composable(Routes.SETTINGS_SCREEN) {
+                composable(
+                Routes.SETTINGS_SCREEN,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     SettingsScreen(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable(Routes.SPLIT_TUNNEL) {
+                composable(
+                Routes.SPLIT_TUNNEL,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     SplitTunnelScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
                 }
-                composable(Routes.WARP_GEN) {
+                composable(
+                Routes.WARP_GEN,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     WarpGenerateScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
                 }
-                composable(Routes.QR_SCAN) {
+                composable(
+                Routes.QR_SCAN,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     QrScanScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onScanned = { navController.popBackStack() })
                 }
-                composable(Routes.PREMIUM) {
+                composable(
+                Routes.PREMIUM,
+                enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
+                exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
+            ) {
                     PremiumScreen(onBack = { navController.popBackStack() })
                 }
             }
