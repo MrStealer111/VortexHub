@@ -53,6 +53,7 @@ import com.vpnmobile.app.ui.MainViewModel
 import java.util.concurrent.Executors
 
 @OptIn(androidx.camera.core.ExperimentalGetImage::class)
+@Suppress("UnsafeOptInUsageError")
 private fun ImageProxy.asInputImage(): InputImage? {
     val mediaImage = image ?: return null
     return InputImage.fromMediaImage(mediaImage, imageInfo.rotationDegrees)
