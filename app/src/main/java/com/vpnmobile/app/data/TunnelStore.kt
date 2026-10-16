@@ -163,7 +163,7 @@ class TunnelStore(private val context: Context) {
             val list = if (raw.isBlank()) mutableListOf() else raw.split(",").map { it.trim() }.filter { it.isNotBlank() }.toMutableList()
             list.remove(profileId)
             list.add(0, profileId)
-            if (list.size > 10) list.removeLast()
+            if (list.size > 10) list.removeAt(list.lastIndex)
             prefs[Keys.CONNECTION_HISTORY] = list.joinToString(",")
         }
     }
