@@ -63,4 +63,5 @@
     <string name="error_start">VPN ဝန်ဆောင်မှုကို စတင်၍မရပါ။</string>
     <string name="error_permission_denied">VPN ခွင့်ပြုချက်ကို ငြင်းပယ်ခဲ့သည်။</string>
     <string name="error_unknown">တစ်ခုခု မှားယွင်းသွားသည်: %1$s</string>
+    <string name="tap_to_connect">လုံခြုံစွာ ချိတ်ဆက်ရန် နှိပ်ပါ</string>
 </resources>
