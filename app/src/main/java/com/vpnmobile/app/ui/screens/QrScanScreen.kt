@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
@@ -52,6 +53,12 @@ import com.vpnmobile.app.ui.MainViewModel
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.camera.core.ExperimentalGetImage::class)
+@OptIn(androidx.camera.core.ExperimentalGetImage::class)
+private fun ImageProxy.asInputImage(): InputImage? {
+    val mediaImage = image ?: return null
+    return InputImage.fromMediaImage(mediaImage, imageInfo.rotationDegrees)
+}
+
 @Composable
 fun QrScanScreen(viewModel: MainViewModel, onBack: () -> Unit, onScanned: (String) -> Unit) {
     val context = LocalContext.current
@@ -91,9 +98,8 @@ fun QrScanScreen(viewModel: MainViewModel, onBack: () -> Unit, onScanned: (Strin
                                 val scanner = BarcodeScanning.getClient()
                                 val analysis = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build().also {
                                     it.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                                        val mediaImage = imageProxy.image
-                                        if (mediaImage != null) {
-                                            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                                        val image = imageProxy.asInputImage()
+                                        if (image != null) {
                                             scanner.process(image).addOnSuccessListener { barcodes ->
                                                 for (b in barcodes) {
                                                     val raw = b.rawValue ?: continue
