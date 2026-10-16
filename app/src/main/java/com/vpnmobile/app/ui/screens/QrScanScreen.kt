@@ -52,13 +52,13 @@ import com.google.mlkit.vision.common.InputImage
 import com.vpnmobile.app.ui.MainViewModel
 import java.util.concurrent.Executors
 
-@OptIn(ExperimentalMaterial3Api::class, androidx.camera.core.ExperimentalGetImage::class)
 @OptIn(androidx.camera.core.ExperimentalGetImage::class)
 private fun ImageProxy.asInputImage(): InputImage? {
     val mediaImage = image ?: return null
     return InputImage.fromMediaImage(mediaImage, imageInfo.rotationDegrees)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrScanScreen(viewModel: MainViewModel, onBack: () -> Unit, onScanned: (String) -> Unit) {
     val context = LocalContext.current
