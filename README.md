@@ -45,7 +45,9 @@
 - **Glass Buttons** — Frosted glass effect
 - **3D Tilt Cards** — Interactive animations
 - **Particles** — Connected state animation
-- **Splash Screen** — V logo with pulse
+- **Splash Screen** — V logo with pulse & fade-in scale
+- **Navigation Transitions** — Fade/slide between screens
+- **Bottom Bar Motion** — Animated pill selection scaling
 
 ### 📱 Management
 - **Server Favorites** — Star toggle
