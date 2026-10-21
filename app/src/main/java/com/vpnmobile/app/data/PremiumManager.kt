@@ -8,6 +8,7 @@ import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
@@ -27,7 +28,8 @@ object PremiumManager : PurchasesUpdatedListener {
 
     fun init(context: Context) {
         if (client != null) return
-        client = BillingClient.newBuilder(context.applicationContext).setListener(this).enablePendingPurchases().build()
+        val pendingParams = PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
+        client = BillingClient.newBuilder(context.applicationContext).setListener(this).enablePendingPurchases(pendingParams).build()
         client?.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
@@ -58,9 +60,12 @@ object PremiumManager : PurchasesUpdatedListener {
     }
 
     fun launchPurchase(activity: android.app.Activity, productDetails: ProductDetails) {
-        val flowParams = BillingFlowParams.newBuilder().setProductDetailsParamsList(
-            listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(productDetails).setOfferToken(productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: "").build())
-        ).build()
+        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+        val productParams = BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(productDetails)
+            .apply { if (offerToken != null) setOfferToken(offerToken) }
+            .build()
+        val flowParams = BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(productParams)).build()
         client?.launchBillingFlow(activity, flowParams)
     }
 
@@ -74,6 +79,4 @@ object PremiumManager : PurchasesUpdatedListener {
             }
         }
     }
-
-    fun setMockPremium(v: Boolean) { _isPremium.value = v }
 }

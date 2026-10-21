@@ -14,8 +14,14 @@ object ConfigTools {
     fun applyKillSwitch(configText: String): String =
         allowedIpsRegex.replace(configText) { "AllowedIPs = 0.0.0.0/0, ::/0" }
 
+    fun isAutoWarp(configText: String): Boolean {
+        val t = configText.trim()
+        return t.equals("warp://auto", true) || t.equals("warp://", true)
+    }
+
     fun parseEndpoint(configText: String): Pair<String, Int>? {
         val t = configText.trim()
+        if (isAutoWarp(t)) return "162.159.192.1" to 2408
         if (t.startsWith("ss://", true) || t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)) {
             return try {
                 val withoutScheme = t.substringAfter("://")
@@ -37,6 +43,19 @@ object ConfigTools {
         return host to port
     }
 
+    fun protocolLabel(configText: String): String {
+        val t = configText.trim().lowercase()
+        return when {
+            isAutoWarp(t) || t.startsWith("vless://warp@") -> "WARP"
+            t.startsWith("wireguard") || t.contains("[interface]") -> "WireGuard"
+            t.startsWith("ss://") -> "Shadowsocks"
+            t.startsWith("vless://") -> "VLESS"
+            t.startsWith("vmess://") -> "VMess"
+            t.startsWith("trojan://") -> "Trojan"
+            else -> "Config"
+        }
+    }
+
     fun maskIp(host: String): String {
         return try {
             if (host.contains(".")) {
@@ -49,6 +68,7 @@ object ConfigTools {
     /** Pulls the first `Endpoint = host:port` line out of a wg-quick config for previews. */
     fun endpointPreview(configText: String): String {
         val t = configText.trim()
+        if (isAutoWarp(t)) return "Cloudflare"
         if (t.startsWith("ss://", true) || t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)) {
             return try {
                 val withoutScheme = t.substringAfter("://")

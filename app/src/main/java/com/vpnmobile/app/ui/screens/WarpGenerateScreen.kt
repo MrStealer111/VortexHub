@@ -24,7 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
@@ -41,6 +41,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -49,6 +50,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -76,7 +78,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var selectedIp by remember { mutableStateOf("162.159.192.1") }
-    var selectedPort by remember { mutableStateOf(2408) }
+    var selectedPort by remember { mutableIntStateOf(2408) }
     var expanded by remember { mutableStateOf(false) }
     var portExpanded by remember { mutableStateOf(false) }
     var generating by remember { mutableStateOf(false) }
@@ -95,7 +97,7 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = { Text("WARP Auto", fontWeight = FontWeight.Bold, color = Color.White) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, null, tint = Color.White) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF070E1F)),
             )
         },
@@ -120,13 +122,13 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Endpoint", style = MaterialTheme.typography.labelMedium, color = Color(0xFF8EA0C2), fontWeight = FontWeight.SemiBold)
                     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-                        OutlinedTextField(value = selectedIp, onValueChange = {}, readOnly = true, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, modifier = Modifier.menuAnchor().fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF24324F), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                        OutlinedTextField(value = selectedIp, onValueChange = {}, readOnly = true, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF24324F), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             ips.forEach { ip -> DropdownMenuItem(text = { Text(ip) }, onClick = { selectedIp = ip; expanded = false }) }
                         }
                     }
                     ExposedDropdownMenuBox(expanded = portExpanded, onExpandedChange = { portExpanded = !portExpanded }) {
-                        OutlinedTextField(value = selectedPort.toString(), onValueChange = {}, readOnly = true, label = { Text("Port", color = Color(0xFF8EA0C2)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(portExpanded) }, modifier = Modifier.menuAnchor().fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF24324F), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                        OutlinedTextField(value = selectedPort.toString(), onValueChange = {}, readOnly = true, label = { Text("Port", color = Color(0xFF8EA0C2)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(portExpanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF24324F), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                         ExposedDropdownMenu(expanded = portExpanded, onDismissRequest = { portExpanded = false }) {
                             ports.forEach { p -> DropdownMenuItem(text = { Text(p.toString()) }, onClick = { selectedPort = p; portExpanded = false }) }
                         }

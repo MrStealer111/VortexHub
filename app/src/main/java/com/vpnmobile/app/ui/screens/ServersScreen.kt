@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,11 +92,11 @@ fun ServersScreen(
     var apiFree by remember { mutableStateOf<List<ServerApi.ServerEntry>>(emptyList()) }
     var freePings by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var freeLoading by remember { mutableStateOf(false) }
-    var refreshTick by remember { mutableStateOf(0) }
+    var refreshTick by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(serverUrl, refreshTick) {
         val fetched = ServerApi.fetchFree(context, serverUrl)
-        apiFree = if (fetched.isNotEmpty()) fetched else freeServers.map { ServerApi.ServerEntry(it.name, it.flag, "vless://free@vortexhub.net:443#${it.name}", false) }
+        apiFree = if (fetched.isNotEmpty()) fetched else freeServers.map { ServerApi.ServerEntry(it.name, it.flag, "warp://auto", false) }
     }
 
     Column(Modifier.fillMaxSize().background(BgBlack)) {
@@ -208,7 +209,7 @@ fun ServersScreen(
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(s.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                                Text("VLESS . $displayMs", color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                Text("${com.vpnmobile.app.data.ConfigTools.protocolLabel(s.uri)} · $displayMs", color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                             }
                             if (isFreeConnected) Box(Modifier.size(20.dp).clip(CircleShape).background(Color(0xFF00C853).copy(0.15f)), contentAlignment = Alignment.Center) { Text("✓", color = Color(0xFF00C853), fontSize = 12.sp, fontWeight = FontWeight.Bold) }
                             else if (freeLoading) androidx.compose.material3.CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = Orange) else Text("›", color = Gray, fontSize = 18.sp)
@@ -232,7 +233,7 @@ fun ServersScreen(
                         val ping = pingResults[p.id]
                         val pingText = when { ping == null -> "Tap ⟡"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
                         val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> Color(0xFF00C853); else -> Color(0xFFFFAB00) }
-                        val proto = when { p.configText.startsWith("ss://", true) -> "SS"; p.configText.startsWith("vless://", true) -> "VLESS"; p.configText.startsWith("vmess://", true) -> "VMESS"; p.configText.startsWith("trojan://", true) -> "TROJAN"; else -> "WIREGUARD" }
+                        val proto = com.vpnmobile.app.data.ConfigTools.protocolLabel(p.configText)
                         val isSelected = p.id == selected?.id
                         Card(
                             onClick = { viewModel.selectProfile(p); onConnect(p) },
@@ -273,7 +274,7 @@ fun ServersScreen(
                         val ping = pingResults[p.id]
                         val pingText = when { ping == null -> "Tap ⟡"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
                         val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> Color(0xFF00C853); else -> Color(0xFFFFAB00) }
-                        val proto = when { p.configText.startsWith("ss://", true) -> "SS"; p.configText.startsWith("vless://", true) -> "VLESS"; p.configText.startsWith("vmess://", true) -> "VMESS"; p.configText.startsWith("trojan://", true) -> "TROJAN"; else -> "WIREGUARD" }
+                        val proto = com.vpnmobile.app.data.ConfigTools.protocolLabel(p.configText)
                         val isSelected = p.id == selected?.id
                         val isFav = p.id in favorites
                         Card(

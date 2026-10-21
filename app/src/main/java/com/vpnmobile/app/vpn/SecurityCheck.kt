@@ -15,8 +15,15 @@ object SecurityCheck {
     fun isDebuggerAttached(): Boolean = Debug.isDebuggerConnected()
     fun isEmulator(): Boolean = android.os.Build.FINGERPRINT.contains("generic") || android.os.Build.MODEL.contains("Emulator")
     fun isTampered(context: Context): Boolean = try {
-        val sig = context.packageManager.getPackageInfo(context.packageName, 64).signatures
-        sig.isNullOrEmpty()
+        val pm = context.packageManager
+        val signatures = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            val info = pm.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES).signingInfo
+            if (info == null) null else if (info.hasMultipleSigners()) info.apkContentsSigners else info.signingCertificateHistory
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNATURES).signatures
+        }
+        signatures.isNullOrEmpty()
     } catch (_: Exception) { true }
 
     fun sslPin(host: String): Boolean {

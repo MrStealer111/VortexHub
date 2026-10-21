@@ -57,6 +57,6 @@ object VpnNotification {
         var v = bytes / 1024.0
         var i = 0
         while (v >= 1024 && i < units.lastIndex) { v /= 1024; i++ }
-        return String.format("%.1f %s", v, units[i])
+        return String.format(java.util.Locale.US, "%.1f %s", v, units[i])
     }
 }

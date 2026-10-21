@@ -106,7 +106,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             var savedProfiles = store.profiles.first()
             if (savedProfiles.isEmpty()) {
-                store.addProfile("WarpGuard Free", "🌐", "vless://warp@162.159.192.1:2408?type=ws&security=none#WarpGuard")
+                store.addProfile("WarpGuard Free", "🌐", "warp://auto")
                 savedProfiles = store.profiles.first()
             }
             val autoConnectEnabled = store.autoConnect.first()

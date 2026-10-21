@@ -1,8 +1,10 @@
 package com.vpnmobile.app.ui.screens
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -21,22 +23,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,13 +41,11 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vpnmobile.app.R
 import com.vpnmobile.app.data.ConfigTools
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
@@ -64,7 +56,6 @@ import kotlinx.coroutines.delay
 private val BgBlack = Color(0xFF0A0A0A)
 private val CardBg = Color(0xFF1C1C1E)
 private val Orange = Color(0xFFFF8C00)
-private val OrangeBg = Color(0xFF3A2A14)
 private val GrayText = Color(0xFF8E8E93)
 private val LightBg = Color(0xFFE8E0D0)
 
@@ -81,20 +72,14 @@ fun HomeScreen(
     val selectedProfile by viewModel.selectedProfile.collectAsStateWithLifecycle()
     val connectedProfile by viewModel.connectedProfile.collectAsStateWithLifecycle()
     val freeSelected by viewModel.freeSelected.collectAsStateWithLifecycle()
-    val pingResults by viewModel.pingResults.collectAsStateWithLifecycle()
-    val pingLoading by viewModel.pingLoading.collectAsStateWithLifecycle()
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(status.state) {
         while (status.state == VpnState.CONNECTED) { now = System.currentTimeMillis(); delay(1000) }
     }
     val targetProfile = freeSelected ?: selectedProfile ?: profiles.firstOrNull()
-    var gameMode by remember { mutableStateOf(false) }
-    var autoStart by remember { mutableStateOf(false) }
-    var bestServer by remember { mutableStateOf(false) }
-    var iranMode by remember { mutableStateOf(true) }
 
     Box(Modifier.fillMaxSize().background(BgBlack)) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.fillMaxSize()) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
@@ -109,59 +94,23 @@ fun HomeScreen(
                 Text("≡", color = GrayText, fontSize = 22.sp, modifier = Modifier.padding(horizontal = 12.dp))
                 Text("⚙", color = GrayText, fontSize = 22.sp)
             }
-            Box(
-                Modifier.padding(horizontal = 14.dp).clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Color(0xFF2A2520), Color(0xFF1C1C1E)))).padding(16.dp)
-            ) {
-                Column {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("↓", color = GrayText, fontSize = 14.sp); Text("Download", color = GrayText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("Upload", color = GrayText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold); Text("↑", color = GrayText, fontSize = 14.sp)
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2C)))
-                    Spacer(Modifier.height(12.dp))
-                    ToggleRow("Game Mode", "Lower ping for smoother gaming", gameMode) { gameMode = it }
-                    DividerLine()
-                    ToggleRow("Auto Start Stop", "Reduces battery", autoStart) { autoStart = it }
-                    DividerLine()
-                    ToggleRow("Set Best Server", "Lowest Ping", bestServer) { bestServer = it }
-                    DividerLine()
-                    ToggleRow("Iran routing mode", "Iran direct, everything else through proxy", iranMode) { iranMode = it }
-                    DividerLine()
-                    Spacer(Modifier.height(10.dp))
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column(Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text("🚀", fontSize = 14.sp)
-                                Text(connectedProfile?.name ?: targetProfile?.name ?: "Marz (test1) [VMess - ws]", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            // IP hidden - not shown per user request
-                            Spacer(Modifier.height(2.dp))
-                        }
-                        val tp = targetProfile
-                        val pr = tp?.let { pingResults[it.id] }
-                        val loading = tp?.let { pingLoading.contains(it.id) } ?: false
-                        when {
-                            status.state != VpnState.DISCONNECTED -> Text(when (status.state) { VpnState.CONNECTED -> "✓ Connected"; VpnState.CONNECTING -> "Connecting..."; else -> "" }, color = Orange, fontSize = 11.sp)
-                            loading -> Text("Checking...", color = Orange, fontSize = 11.sp)
-                            pr != null -> Text(if (pr.success) "${pr.ms}ms ✓" else "Failed ✗", color = if (pr.success) Color(0xFF00C853) else Color(0xFFFF5252), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { tp?.let { viewModel.testPing(it) } })
-                            else -> Text("Tap to Ping Again", color = Orange, fontSize = 11.sp, fontWeight = FontWeight.Medium, modifier = Modifier.clickable { tp?.let { viewModel.testPing(it) } })
-                        }
-                    }
-                }
-            }
-            Spacer(Modifier.height(28.dp))
+
+            ServerCard(
+                name = connectedProfile?.name ?: targetProfile?.name ?: "Select a server",
+                subtitle = targetProfile?.let { "${ConfigTools.protocolLabel(it.configText)} · ${ConfigTools.endpointPreview(it.configText)}" } ?: "Tap to choose a server",
+                flag = targetProfile?.flag ?: "\uD83C\uDF10",
+                state = status.state,
+                onManage = onOpenServers,
+            )
+
+            Spacer(Modifier.weight(1f))
             VortexPowerButton(state = status.state, onClick = {
                 when (status.state) {
                     VpnState.CONNECTED, VpnState.CONNECTING -> viewModel.disconnect()
                     VpnState.DISCONNECTED -> { val p = targetProfile; if (p != null) onConnect(p) else onOpenServers() }
                 }
             })
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(16.dp))
             Text(
                 text = when (status.state) { VpnState.CONNECTED -> "Connected"; VpnState.CONNECTING -> "Connecting..."; else -> "Disconnected" },
                 color = GrayText, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center
@@ -186,25 +135,52 @@ fun HomeScreen(
                 Spacer(Modifier.height(10.dp))
                 RealTimeLatencyCard()
             }
-            Spacer(Modifier.height(80.dp))
+            Spacer(Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun DividerLine() { Spacer(Modifier.height(10.dp)); Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2C))); Spacer(Modifier.height(10.dp)) }
-
-@Composable
-private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                Box(Modifier.size(16.dp).clip(CircleShape).background(Color(0xFF3A3A3C)), contentAlignment = Alignment.Center) { Text("i", color = GrayText, fontSize = 9.sp, fontWeight = FontWeight.Bold) }
+private fun ServerCard(
+    name: String,
+    subtitle: String,
+    flag: String,
+    state: VpnState,
+    onManage: () -> Unit,
+) {
+    Box(
+        Modifier.padding(horizontal = 14.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(CardBg).clickable { onManage() }.padding(14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(42.dp).clip(CircleShape).background(Color(0xFF2C2C2E)),
+                contentAlignment = Alignment.Center
+            ) { Text(flag, fontSize = 19.sp) }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Spacer(Modifier.height(2.dp))
+                Text(subtitle, color = GrayText, fontSize = 11.sp, maxLines = 1)
             }
-            Text(subtitle, color = GrayText, fontSize = 11.sp)
+            Spacer(Modifier.width(8.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    when (state) {
+                        VpnState.CONNECTED -> "✓ Connected"
+                        VpnState.CONNECTING -> "Connecting..."
+                        VpnState.DISCONNECTED -> "Manage"
+                    },
+                    color = when (state) {
+                        VpnState.CONNECTED -> Color(0xFF00C853)
+                        VpnState.CONNECTING -> Orange
+                        VpnState.DISCONNECTED -> Orange
+                    },
+                    fontSize = 12.sp, fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(2.dp))
+                Text("›", color = GrayText, fontSize = 14.sp)
+            }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Orange, uncheckedThumbColor = Color.White, uncheckedTrackColor = Color(0xFF3A3A3C), uncheckedBorderColor = Color.Transparent))
     }
 }
 
@@ -215,10 +191,10 @@ private fun VortexPowerButton(state: VpnState, onClick: () -> Unit) {
     val infinite = rememberInfiniteTransition(label = "pow")
     val pulse by infinite.animateFloat(initialValue = 0.96f, targetValue = 1.06f, animationSpec = infiniteRepeatable(tween(800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "pulse")
     val glow by infinite.animateFloat(initialValue = 0.15f, targetValue = 0.35f, animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "glow")
-    val rotate by infinite.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(tween(3000, easing = androidx.compose.animation.core.LinearEasing)), label = "rot")
+    val rotate by infinite.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing)), label = "rot")
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val scale by androidx.compose.animation.core.animateFloatAsState(if (pressed) 0.90f else 1f, tween(100), label = "scale")
+    val scale by animateFloatAsState(if (pressed) 0.90f else 1f, tween(100), label = "scale")
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().height(220.dp)) {
         if (connected) {
             Box(Modifier.size(220.dp).scale(pulse).alpha(glow).clip(CircleShape).background(Brush.radialGradient(listOf(Orange.copy(0.35f), Color.Transparent))))
@@ -228,7 +204,7 @@ private fun VortexPowerButton(state: VpnState, onClick: () -> Unit) {
                 val r = 105f
                 val x = kotlin.math.cos(Math.toRadians(ang.toDouble())).toFloat() * r
                 val y = kotlin.math.sin(Math.toRadians(ang.toDouble())).toFloat() * r
-                Box(Modifier.size(7.dp).padding(0.dp).scale(pulse).alpha(0.9f).clip(CircleShape).background(Orange).graphicsLayer { translationX = x; translationY = y })
+                Box(Modifier.size(7.dp).scale(pulse).alpha(0.9f).clip(CircleShape).background(Orange).graphicsLayer { translationX = x; translationY = y })
             }
         }
         if (connecting) {
@@ -269,13 +245,13 @@ private fun StatMini(icon: String, value: String, modifier: Modifier = Modifier)
 
 @Composable
 private fun RealTimeLatencyCard() {
-    var latency by remember { mutableStateOf<Int?>(null) }
+    var latency by remember { mutableLongStateOf(-1L) }
     LaunchedEffect(Unit) {
         while (true) {
             try {
                 val r = com.vpnmobile.app.data.PingTester.ping("[Interface]\nPrivateKey=test\n[Peer]\nEndpoint = 1.1.1.1:53")
-                latency = if (r.success) r.ms else null
-            } catch (_: Exception) { latency = null }
+                latency = if (r.success) r.ms.toLong() else -1L
+            } catch (_: Exception) { latency = -1L }
             delay(3000)
         }
     }
@@ -284,9 +260,9 @@ private fun RealTimeLatencyCard() {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(if (latency != null && latency!! < 100) Color(0xFF00C853) else if (latency != null) Color(0xFFFFAB00) else GrayText))
+            Box(Modifier.size(8.dp).clip(CircleShape).background(if (latency >= 0 && latency < 100) Color(0xFF00C853) else if (latency >= 0) Color(0xFFFFAB00) else GrayText))
             Text("Latency 1.1.1.1", color = GrayText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         }
-        Text(latency?.let { "$it ms" } ?: "—", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(if (latency >= 0) "$latency ms" else "—", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }

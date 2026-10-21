@@ -1,5 +1,6 @@
 package com.vpnmobile.app.ui.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,6 +56,7 @@ private val CardBg = Color(0xFF1E1E1E)
 private val Gray = Color(0xFF8E8E93)
 private val Border = Color(0xFF2C2C2E)
 
+@SuppressLint("HardwareIds")
 @Composable
 fun PersonScreen(viewModel: MainViewModel, onPremium: (() -> Unit)? = null, onSettings: (() -> Unit)? = null) {
     val profiles by viewModel.profiles.collectAsStateWithLifecycle()

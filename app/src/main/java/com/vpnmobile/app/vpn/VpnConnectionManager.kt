@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import java.net.InetAddress
 
 enum class VpnState { DISCONNECTED, CONNECTING, CONNECTED }
@@ -46,7 +45,6 @@ class VpnConnectionManager(private val context: Context) {
     val status: StateFlow<VpnStatus> = _status.asStateFlow()
 
     private var statsJob: Job? = null
-    private var isMockOnly = false
 
     private val tunnel = object : Tunnel {
         override fun getName(): String = TUNNEL_NAME
@@ -72,9 +70,14 @@ class VpnConnectionManager(private val context: Context) {
         "unknown"
     }
 
-    private fun isGenericUri(text: String): Boolean {
+    private fun isObfuscatedUri(text: String): Boolean {
         val t = text.trim()
         return t.startsWith("ss://", true) || t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)
+    }
+
+    private fun isAutoWarp(text: String): Boolean {
+        val t = text.trim().lowercase()
+        return t == "warp://auto" || t == "warp://" || t.startsWith("vless://warp@")
     }
 
     private suspend fun connectivityCheck(): Boolean = withContext(Dispatchers.IO) {
@@ -101,180 +104,63 @@ class VpnConnectionManager(private val context: Context) {
             throw Exception("Premium required — Please upgrade to VortexHub Premium")
         }
 
-        _status.update { it.copy(state = VpnState.CONNECTING, profileId = profile.id) }
-        isMockOnly = false
+        val configText = profile.configText.trim()
+        if (configText.isEmpty()) {
+            throw Exception("Empty configuration — Import a WireGuard config or use WARP")
+        }
+        if (isObfuscatedUri(configText) && !isAutoWarp(configText)) {
+            throw Exception("This protocol is not supported in this build yet. Please use WireGuard or WARP.")
+        }
 
-        if (isGenericUri(profile.configText)) {
-            if (XrayManager.isSupported(profile.configText)) {
-                connectViaXray(profile, killSwitch, splitEnabled, splitMode, excludedApps)
+        _status.update { it.copy(state = VpnState.CONNECTING, profileId = profile.id) }
+
+        try {
+            if (isAutoWarp(configText)) {
+                connectViaWarp(profile, splitEnabled, splitMode, excludedApps)
             } else {
-                connectViaWarp(profile, killSwitch, splitEnabled, splitMode, excludedApps)
+                connectViaWireGuard(profile, killSwitch, splitEnabled, splitMode, excludedApps)
             }
-        } else {
-            connectViaWireGuard(profile, killSwitch, splitEnabled, splitMode, excludedApps)
+        } catch (e: Exception) {
+            stopStatsPolling()
+            VpnNotification.cancel(appContext)
+            _status.value = VpnStatus()
+            throw e
         }
     }
 
     private suspend fun connectViaWarp(
         profile: TunnelProfile,
-        killSwitch: Boolean,
         splitEnabled: Boolean,
         splitMode: String,
         excludedApps: Set<String>,
     ) {
-        val hasInternet = connectivityCheck()
-        if (!hasInternet) {
-            _status.update { VpnStatus() }
+        if (!connectivityCheck()) {
             throw Exception("No internet connection — Check your network")
         }
 
         Log.d(TAG, "Generating WARP config...")
-        val warpResult = try {
-            withTimeoutOrNull(20_000L) {
-                com.vpnmobile.app.data.WarpGenerator.generate()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "WARP generate exception: ${e.message}")
-            null
-        }
-
-        if (warpResult == null) {
-            Log.e(TAG, "WARP generation failed — trying mock fallback")
-            isMockOnly = true
-            _status.update {
-                it.copy(
-                    state = VpnState.CONNECTED,
-                    profileId = profile.id,
-                    connectedAtMillis = System.currentTimeMillis(),
-                )
-            }
-            VpnNotification.show(appContext, profile.name, 0, 0, true)
-            startMockStats(profile.name)
-            return
-        }
+        val warpResult = com.vpnmobile.app.data.WarpGenerator.generate()
 
         Log.d(TAG, "WARP endpoint: ${warpResult.endpoint}, address: ${warpResult.address}")
 
-        try {
-            val warpConfig = withContext(Dispatchers.IO) {
-                Config.parse(warpResult.config.byteInputStream(Charsets.UTF_8))
-            }
-            withContext(Dispatchers.IO) {
-                backend.setState(tunnel, State.UP, warpConfig)
-            }
-            _status.update {
-                it.copy(
-                    state = VpnState.CONNECTED,
-                    profileId = profile.id,
-                    connectedAtMillis = System.currentTimeMillis(),
-                )
-            }
-            VpnNotification.show(appContext, profile.name, 0, 0, true)
-            startStatsPolling(profile.name)
-            Log.d(TAG, "WARP tunnel connected successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "GoBackend failed: ${e.message}")
-            isMockOnly = true
-            _status.update {
-                it.copy(
-                    state = VpnState.CONNECTED,
-                    profileId = profile.id,
-                    connectedAtMillis = System.currentTimeMillis(),
-                )
-            }
-            VpnNotification.show(appContext, profile.name, 0, 0, true)
-            startMockStats(profile.name)
+        val warpConfig = withContext(Dispatchers.IO) {
+            Config.parse(warpResult.config.byteInputStream(Charsets.UTF_8))
         }
-    }
+        val finalConfig = applySplitTunnel(warpConfig, splitEnabled, splitMode, excludedApps)
 
-    private suspend fun connectViaXray(
-        profile: TunnelProfile,
-        killSwitch: Boolean,
-        splitEnabled: Boolean,
-        splitMode: String,
-        excludedApps: Set<String>,
-    ) {
-        Log.d(TAG, "connectViaXray: ${profile.configText.take(50)}...")
-
-        val hasInternet = connectivityCheck()
-        if (!hasInternet) {
-            _status.update { VpnStatus() }
-            throw Exception("No internet connection — Check your network")
+        withContext(Dispatchers.IO) {
+            backend.setState(tunnel, State.UP, finalConfig)
         }
-
-        if (!XrayManager.isBinaryInstalled(appContext)) {
-            Log.e(TAG, "Xray binary not installed")
-            _status.update { VpnStatus() }
-            throw Exception("Xray core not installed — Please install Xray binary")
+        _status.update {
+            it.copy(
+                state = VpnState.CONNECTED,
+                profileId = profile.id,
+                connectedAtMillis = System.currentTimeMillis(),
+            )
         }
-
-        Log.d(TAG, "Starting Xray core...")
-        val xrayStarted = XrayManager.connect(appContext, profile.configText)
-        if (!xrayStarted) {
-            val err = XrayManager.lastError ?: "Unknown error"
-            Log.e(TAG, "Xray failed to start: $err")
-            _status.update { VpnStatus() }
-            throw Exception("Xray failed: $err")
-        }
-
-        Log.d(TAG, "Xray started, generating WARP tunnel...")
-
-        val warpResult = try {
-            withTimeoutOrNull(20_000L) {
-                com.vpnmobile.app.data.WarpGenerator.generate()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "WARP generate exception: ${e.message}")
-            null
-        }
-
-        if (warpResult == null) {
-            Log.e(TAG, "WARP generation failed — using Xray only (no VPN tunnel)")
-            isMockOnly = true
-            _status.update {
-                it.copy(
-                    state = VpnState.CONNECTED,
-                    profileId = profile.id,
-                    connectedAtMillis = System.currentTimeMillis(),
-                )
-            }
-            VpnNotification.show(appContext, profile.name, 0, 0, true)
-            startMockStats(profile.name)
-            return
-        }
-
-        Log.d(TAG, "WARP endpoint: ${warpResult.endpoint}")
-
-        try {
-            val warpConfig = withContext(Dispatchers.IO) {
-                Config.parse(warpResult.config.byteInputStream(Charsets.UTF_8))
-            }
-            withContext(Dispatchers.IO) {
-                backend.setState(tunnel, State.UP, warpConfig)
-            }
-            _status.update {
-                it.copy(
-                    state = VpnState.CONNECTED,
-                    profileId = profile.id,
-                    connectedAtMillis = System.currentTimeMillis(),
-                )
-            }
-            VpnNotification.show(appContext, profile.name, 0, 0, true)
-            startStatsPolling(profile.name)
-            Log.d(TAG, "Xray + WARP tunnel connected successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "GoBackend failed: ${e.message} — using Xray only")
-            isMockOnly = true
-            _status.update {
-                it.copy(
-                    state = VpnState.CONNECTED,
-                    profileId = profile.id,
-                    connectedAtMillis = System.currentTimeMillis(),
-                )
-            }
-            VpnNotification.show(appContext, profile.name, 0, 0, true)
-            startMockStats(profile.name)
-        }
+        VpnNotification.show(appContext, profile.name, 0, 0, true)
+        startStatsPolling(profile.name)
+        Log.d(TAG, "WARP tunnel connected successfully")
     }
 
     private suspend fun connectViaWireGuard(
@@ -284,62 +170,55 @@ class VpnConnectionManager(private val context: Context) {
         splitMode: String,
         excludedApps: Set<String>,
     ) {
-        try {
-            val configText = if (killSwitch) ConfigTools.applyKillSwitch(profile.configText) else profile.configText
-            var config = withContext(Dispatchers.IO) {
-                Config.parse(configText.byteInputStream(Charsets.UTF_8))
-            }
-            if (splitEnabled && excludedApps.isNotEmpty()) {
-                config = withContext(Dispatchers.IO) {
-                    val iface = config.`interface`
-                    val builder = com.wireguard.config.Interface.Builder()
-                    iface.addresses.forEach { builder.addAddress(it) }
-                    iface.dnsServers.forEach { builder.addDnsServer(it) }
-                    iface.dnsSearchDomains.forEach { builder.addDnsSearchDomain(it) }
-                    builder.setKeyPair(iface.keyPair)
-                    iface.mtu.ifPresent { builder.setMtu(it) }
-                    iface.listenPort.ifPresent { v -> try { builder.setListenPort(v) } catch (_: Exception) {} }
-                    if (splitMode == "include") {
-                        excludedApps.forEach { builder.includeApplication(it) }
-                    } else {
-                        excludedApps.forEach { builder.excludeApplication(it) }
-                    }
-                    val newIface = builder.build()
-                    com.wireguard.config.Config.Builder().setInterface(newIface).apply { config.peers.forEach { addPeer(it) } }.build()
-                }
-            }
-            withContext(Dispatchers.IO) {
-                backend.setState(tunnel, State.UP, config)
-            }
-            _status.update {
-                it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
-            }
-            VpnNotification.show(appContext, profile.name, 0, 0, true)
-            startStatsPolling(profile.name)
-        } catch (e: Exception) {
-            VpnNotification.cancel(appContext)
-            _status.update { VpnStatus() }
-            throw e
+        val configText = if (killSwitch) ConfigTools.applyKillSwitch(profile.configText) else profile.configText
+        val baseConfig = withContext(Dispatchers.IO) {
+            Config.parse(configText.byteInputStream(Charsets.UTF_8))
         }
+        val finalConfig = applySplitTunnel(baseConfig, splitEnabled, splitMode, excludedApps)
+
+        withContext(Dispatchers.IO) {
+            backend.setState(tunnel, State.UP, finalConfig)
+        }
+        _status.update {
+            it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
+        }
+        VpnNotification.show(appContext, profile.name, 0, 0, true)
+        startStatsPolling(profile.name)
+    }
+
+    private fun applySplitTunnel(
+        config: Config,
+        splitEnabled: Boolean,
+        splitMode: String,
+        excludedApps: Set<String>,
+    ): Config {
+        if (!splitEnabled || excludedApps.isEmpty()) return config
+        val iface = config.`interface`
+        val builder = com.wireguard.config.Interface.Builder()
+        iface.addresses.forEach { builder.addAddress(it) }
+        iface.dnsServers.forEach { builder.addDnsServer(it) }
+        iface.dnsSearchDomains.forEach { builder.addDnsSearchDomain(it) }
+        builder.setKeyPair(iface.keyPair)
+        iface.mtu.ifPresent { builder.setMtu(it) }
+        iface.listenPort.ifPresent { v -> try { builder.setListenPort(v) } catch (_: Exception) {} }
+        if (splitMode == "include") {
+            excludedApps.forEach { builder.includeApplication(it) }
+        } else {
+            excludedApps.forEach { builder.excludeApplication(it) }
+        }
+        val newIface = builder.build()
+        return com.wireguard.config.Config.Builder().setInterface(newIface).apply { config.peers.forEach { addPeer(it) } }.build()
     }
 
     suspend fun disconnect() {
-        Log.d(TAG, "Disconnecting VPN (mockOnly=$isMockOnly)")
+        Log.d(TAG, "Disconnecting VPN")
         stopStatsPolling()
         VpnNotification.cancel(appContext)
-
-        if (XrayManager.isRunning) {
-            Log.d(TAG, "Stopping Xray core...")
-            XrayManager.disconnect()
-        }
-
         try {
             withContext(Dispatchers.IO) {
                 backend.setState(tunnel, State.DOWN, null)
             }
         } catch (_: Exception) {}
-
-        isMockOnly = false
         _status.value = VpnStatus()
         Log.d(TAG, "VPN disconnected")
     }
@@ -363,19 +242,6 @@ class VpnConnectionManager(private val context: Context) {
                 } catch (_: Exception) {
                 }
                 delay(2_000)
-            }
-        }
-    }
-
-    private fun startMockStats(profileName: String) {
-        stopStatsPolling()
-        statsJob = scope.launch {
-            var rx = 0L; var tx = 0L
-            while (isActive) {
-                rx += (1024..8192).random(); tx += (512..4096).random()
-                _status.update { it.copy(rxBytes = rx, txBytes = tx, lastHandshakeMillis = System.currentTimeMillis()) }
-                VpnNotification.show(appContext, profileName, rx, tx, true)
-                delay(1_500)
             }
         }
     }

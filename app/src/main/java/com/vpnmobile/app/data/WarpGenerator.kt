@@ -27,7 +27,7 @@ object WarpGenerator {
 
     data class WarpResult(val config: String, val endpoint: String, val address: String)
 
-    suspend fun generate(endpointIp: String = "162.159.192.1", port: Int = 2408, autoBest: Boolean = true, customDns: String = "1.1.1.1, 1.0.0.1"): WarpResult = withContext(Dispatchers.IO) {
+    suspend fun generate(endpointIp: String = "162.159.192.1", port: Int = 2408, autoBest: Boolean = false, customDns: String = "1.1.1.1, 1.0.0.1"): WarpResult = withContext(Dispatchers.IO) {
         var ip = endpointIp
         var pt = port
         if (autoBest) {

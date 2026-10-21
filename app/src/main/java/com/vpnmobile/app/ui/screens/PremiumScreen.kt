@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
@@ -51,7 +51,7 @@ fun PremiumScreen(onBack: () -> Unit) {
     val products by PremiumManager.products.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { PremiumManager.init(context) }
     Scaffold(containerColor = Color(0xFF0A0A0A), topBar = {
-        TopAppBar(title = { Text("Premium", color = Color.White, fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, null, tint = Color.White) } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A)))
+        TopAppBar(title = { Text("Premium", color = Color.White, fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A)))
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Color(0xFFFF8C00), Color(0xFFFF6B00)))).padding(20.dp)) {
@@ -85,9 +85,7 @@ fun PremiumScreen(onBack: () -> Unit) {
                 if (products.isEmpty()) {
                     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)), border = BorderStroke(1.dp, Color(0xFF2C2C2E))) {
                         Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Billing not available in debug", color = Color(0xFF8E8E93), fontSize = 12.sp)
-                            Spacer(Modifier.height(8.dp))
-                            GlassPrimaryButton(onClick = { PremiumManager.setMockPremium(true) }) { Text("Mock Unlock (Test)", color = Color.White) }
+                            Text("Billing is not available right now.", color = Color(0xFF8E8E93), fontSize = 12.sp)
                         }
                     }
                 }
