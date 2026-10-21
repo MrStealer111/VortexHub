@@ -143,7 +143,7 @@ fun SettingsScreen(
                 Text("Version 1.0.0", color = Gray, fontSize = 12.sp)
                 Spacer(Modifier.height(8.dp))
                 Text("Features:", color = Orange, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                Text("• SS / VLESS / VMESS / Trojan support", color = Gray, fontSize = 11.sp)
+                Text("• WireGuard / Cloudflare WARP support", color = Gray, fontSize = 11.sp)
                 Text("• WARP auto-configuration", color = Gray, fontSize = 11.sp)
                 Text("• Split tunneling", color = Gray, fontSize = 11.sp)
                 Text("• Kill switch", color = Gray, fontSize = 11.sp)

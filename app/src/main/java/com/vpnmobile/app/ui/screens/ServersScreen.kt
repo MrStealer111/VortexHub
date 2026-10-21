@@ -124,7 +124,7 @@ fun ServersScreen(
                         DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = Color.White, fontSize = 13.sp); Text(if (showManualSub) "∧" else "∨", color = Color.White) } }, onClick = { showManualSub = !showManualSub })
                         if (showManualSub) {
                             HorizontalDivider(color = Color(0xFF2C2C2E))
-                            listOf("socks", "hysteria2", "shadowsocks", "trojan", "vless", "vmess", "wireguard", "http", "proxy chain", "ssh", "dnstt").forEach { p ->
+                            listOf("wireguard", "warp").forEach { p ->
                                 DropdownMenuItem(text = { Text("Add manual $p", color = Color.White, fontSize = 12.sp) }, onClick = { showPlusMenu = false; showManualSub = false; onImport() })
                             }
                         }

@@ -10,9 +10,9 @@ import androidx.compose.ui.graphics.Color
 private val DarkColors = darkColorScheme(
     primary = Blue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFF1E3A5F),
+    primaryContainer = Color(0xFF3A2A14),
     secondary = Cyan,
-    onSecondary = Color(0xFF04242E),
+    onSecondary = Color(0xFFFFFFFF),
     tertiary = Purple,
     background = BackgroundDark,
     onBackground = TextPrimaryDark,
@@ -22,9 +22,9 @@ private val DarkColors = darkColorScheme(
     onSurfaceVariant = TextSecondaryDark,
     surfaceContainer = SurfaceGlass,
     error = ErrorRed,
-    outline = Color(0xFF24324F),
-    outlineVariant = Color(0xFF1E2D4A),
-    scrim = Color(0x99070E1F),
+    outline = Color(0xFF3A3A3C),
+    outlineVariant = Color(0xFF2C2C2E),
+    scrim = Color(0x990A0A0A),
 )
 
 private val LightColors = lightColorScheme(
@@ -32,7 +32,7 @@ private val LightColors = lightColorScheme(
     onPrimary = Color.White,
     primaryContainer = Color(0xFFDBEAFE),
     secondary = Cyan,
-    onSecondary = Color(0xFF04242E),
+    onSecondary = Color(0xFFFFFFFF),
     tertiary = Purple,
     background = BackgroundLight,
     onBackground = TextPrimaryLight,

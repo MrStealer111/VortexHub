@@ -1,10 +1,6 @@
 # VortexHub — Premium Android VPN
 
 <p align="center">
-  <img src="ui_preview.png" width="1000" alt="VortexHub UI Preview">
-</p>
-
-<p align="center">
   <strong>🔒 Secure • 🚀 Fast • 🎨 Beautiful</strong>
 </p>
 
@@ -52,7 +48,7 @@
 - **Server Favorites** — Star toggle
 - **Connection History** — Last 10 connections
 - **Custom DNS** — Cloudflare/Google
-- **Free Server Update** — GitHub/Cloudflare URL
+- **Custom Server JSON** — asset list or your own URL
 - **QR Code Import** — CameraX + MLKit
 
 ---
@@ -93,10 +89,7 @@ app/src/main/java/com/vpnmobile/app/
 ├── vpn/
 │   ├── VpnConnectionManager.kt  # VPN lifecycle
 │   ├── VpnNotification.kt       # Notifications
-│   ├── SecurityCheck.kt         # Root/debug detect
-│   ├── XrayConfigGenerator.kt   # URI → JSON
-│   ├── XrayManager.kt           # Xray process
-│   └── XrayDownloader.kt        # GitHub download
+│   └── SecurityCheck.kt         # Root/debug detect
 └── ui/
     ├── MainViewModel.kt         # State management
     ├── VpnApp.kt                # Navigation
@@ -119,12 +112,11 @@ app/src/main/java/com/vpnmobile/app/
 
 ---
 
-## 🚀 Build & Install
+## 📥 Download
 
-### GitHub Actions (Automatic)
-1. Push to `master` branch
-2. Go to **Actions** tab
-3. Download `VortexHub.apk` artifact
+Grab the latest debug APK from [Releases](https://github.com/MrStealer111/VortexHub/releases/latest).
+
+## 🚀 Build & Install
 
 ### Local Build
 ```bash
@@ -184,10 +176,9 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 ## 🔧 Configuration
 
 ### Free Server Update
-1. Edit `server.json` on GitHub
-2. Push to master
-3. App auto-fetches on refresh
-4. No APK rebuild needed
+1. Edit `app/src/main/assets/server.json`
+2. Rebuild and install
+3. Or set a custom server JSON URL in Profile → Free Server URL (fetched on refresh)
 
 ### WARP Setup
 1. Go to Configs → WARP

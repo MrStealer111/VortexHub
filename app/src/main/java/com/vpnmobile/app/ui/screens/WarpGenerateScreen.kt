@@ -93,42 +93,42 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val ports = listOf(500, 1701, 2408, 4500)
 
     Scaffold(
-        containerColor = Color(0xFF070E1F),
+        containerColor = Color(0xFF0A0A0A),
         topBar = {
             TopAppBar(
                 title = { Text("WARP Auto", fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF070E1F)),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A)),
             )
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Color(0xFF0F1B33), Color(0xFF162040)))).padding(18.dp)
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Color(0xFF1C1C1E), Color(0xFF2A2520)))).padding(18.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(48.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Cyan, Color(0xFF3B82F6)))), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(48.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Cyan, Color(0xFFFF6B00)))), contentAlignment = Alignment.Center) {
                         Icon(Icons.Filled.AutoAwesome, null, Modifier.size(22.dp), Color.White)
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text("Cloudflare WARP", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                        Text("Key မထည့်ပဲ Auto WireGuard config", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8EA0C2))
+                        Text("Key မထည့်ပဲ Auto WireGuard config", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))
                     }
                 }
             }
 
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF121D36)), border = BorderStroke(1.dp, Color(0xFF1E2D4A))) {
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C1E)), border = BorderStroke(1.dp, Color(0xFF2C2C2E))) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Endpoint", style = MaterialTheme.typography.labelMedium, color = Color(0xFF8EA0C2), fontWeight = FontWeight.SemiBold)
+                    Text("Endpoint", style = MaterialTheme.typography.labelMedium, color = Color(0xFF8E8E93), fontWeight = FontWeight.SemiBold)
                     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-                        OutlinedTextField(value = selectedIp, onValueChange = {}, readOnly = true, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF24324F), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                        OutlinedTextField(value = selectedIp, onValueChange = {}, readOnly = true, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF3A3A3C), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             ips.forEach { ip -> DropdownMenuItem(text = { Text(ip) }, onClick = { selectedIp = ip; expanded = false }) }
                         }
                     }
                     ExposedDropdownMenuBox(expanded = portExpanded, onExpandedChange = { portExpanded = !portExpanded }) {
-                        OutlinedTextField(value = selectedPort.toString(), onValueChange = {}, readOnly = true, label = { Text("Port", color = Color(0xFF8EA0C2)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(portExpanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF24324F), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                        OutlinedTextField(value = selectedPort.toString(), onValueChange = {}, readOnly = true, label = { Text("Port", color = Color(0xFF8E8E93)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(portExpanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF3A3A3C), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                         ExposedDropdownMenu(expanded = portExpanded, onDismissRequest = { portExpanded = false }) {
                             ports.forEach { p -> DropdownMenuItem(text = { Text(p.toString()) }, onClick = { selectedPort = p; portExpanded = false }) }
                         }
@@ -155,10 +155,10 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = Cyan),
                 enabled = !generating,
             ) {
-                if (generating) CircularProgressIndicator(Modifier.size(18.dp), color = Color(0xFF04242E), strokeWidth = 2.dp)
-                else Icon(Icons.Filled.Bolt, null, Modifier.size(18.dp), Color(0xFF04242E))
+                if (generating) CircularProgressIndicator(Modifier.size(18.dp), color = Color(0xFFFFFFFF), strokeWidth = 2.dp)
+                else Icon(Icons.Filled.Bolt, null, Modifier.size(18.dp), Color(0xFFFFFFFF))
                 Spacer(Modifier.width(8.dp))
-                Text(if (generating) "Generating..." else "Generate WARP Config", color = Color(0xFF04242E), fontWeight = FontWeight.Black, fontSize = 15.sp)
+                Text(if (generating) "Generating..." else "Generate WARP Config", color = Color(0xFFFFFFFF), fontWeight = FontWeight.Black, fontSize = 15.sp)
             }
 
             error?.let {
@@ -168,19 +168,19 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             }
 
             result?.let { r ->
-                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1F2E)), border = BorderStroke(1.dp, Success.copy(0.3f))) {
+                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF14230F)), border = BorderStroke(1.dp, Success.copy(0.3f))) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Filled.CheckCircle, null, Modifier.size(18.dp), Success)
                             Text("Generated!", color = Success, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.weight(1f))
-                            Text(r.endpoint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8EA0C2))
+                            Text(r.endpoint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))
                         }
-                        Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF070E1F)).padding(12.dp)) {
-                            Text(r.config, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp), color = Color(0xFFE8EEF9))
+                        Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF0A0A0A)).padding(12.dp)) {
+                            Text(r.config, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp), color = Color(0xFFFFFFFF))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { clipboard.setText(AnnotatedString(r.config)) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2D4A))) {
+                            Button(onClick = { clipboard.setText(AnnotatedString(r.config)) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2E))) {
                                 Icon(Icons.Filled.ContentCopy, null, Modifier.size(14.dp), Color.White)
                                 Spacer(Modifier.width(6.dp))
                                 Text("Copy", color = Color.White)
@@ -196,8 +196,8 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
             }
 
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF121D36)), border = BorderStroke(1.dp, Color(0xFF1E2D4A))) {
-                Text("warp-conf-gen.vercel.app API ကို အသုံးပြုပြီး Cloudflare မှာ Auto register လုပ်ပြီး WireGuard config ထုတ်ပေးတာပါ။ Key ကို device ထဲမှာပဲ generate လုပ်ပါတယ်။", Modifier.padding(14.dp), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8EA0C2), lineHeight = 16.sp)
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C1E)), border = BorderStroke(1.dp, Color(0xFF2C2C2E))) {
+                Text("Cloudflare WARP API (api.cloudflareclient.com) ကို အသုံးပြုပြီး Auto register လုပ်ကာ WireGuard config ထုတ်ပေးတာပါ။ Key ကို device ထဲမှာပဲ generate လုပ်ပါတယ်။", Modifier.padding(14.dp), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93), lineHeight = 16.sp)
             }
         }
     }

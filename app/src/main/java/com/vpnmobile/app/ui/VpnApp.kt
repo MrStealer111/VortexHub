@@ -102,7 +102,7 @@ fun VpnApp(
         SplashScreen(onSplashComplete = { showSplash = false })
     } else {
         Scaffold(
-            containerColor = Color(0xFF070E1F),
+            containerColor = Color(0xFF0A0A0A),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (currentRoute == Routes.HOME || currentRoute == Routes.SERVERS || currentRoute == Routes.SETTINGS) {
@@ -235,7 +235,7 @@ private fun PillBottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
 private fun PillNavItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit, showArrow: Boolean = false) {
     val scale by animateFloatAsState(if (selected) 1f else 0.92f, spring(dampingRatio = 0.6f, stiffness = 400f), label = "pillScale")
     val bg = if (selected) Brush.linearGradient(listOf(Color(0xFFFF8C00), Color(0xFFFF6B00))) else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
-    val contentColor = if (selected) Color.White else Color(0xFF8EA0C2)
+    val contentColor = if (selected) Color.White else Color(0xFF8E8E93)
     Box(
         modifier = Modifier.clip(RoundedCornerShape(50)).background(bg).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick).padding(horizontal = if (selected) 18.dp else 14.dp, vertical = 10.dp).scale(scale),
         contentAlignment = Alignment.Center,

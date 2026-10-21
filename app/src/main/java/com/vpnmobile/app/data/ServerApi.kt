@@ -8,17 +8,17 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object ServerApi {
-    private const val REMOTE_URL = "https://raw.githubusercontent.com/devtint/WarpConfGen/main/server.json"
-    private const val CLOUDFLARE_URL = "https://vortexhub.pages.dev/server.json"
 
     data class ServerEntry(val name: String, val flag: String, val uri: String, val premium: Boolean)
 
     suspend fun fetchFree(context: Context, customUrl: String = ""): List<ServerEntry> = withContext(Dispatchers.IO) {
-        if (customUrl.isNotBlank()) {
-            tryFetch(customUrl)?.let { return@withContext parse(it) }
-        }
-        val remote = tryFetch(REMOTE_URL) ?: tryFetch(CLOUDFLARE_URL) ?: loadAsset(context)
-        parse(remote)
+        val source = (if (customUrl.isNotBlank()) tryFetch(customUrl) else null) ?: loadAsset(context)
+        parse(source).filter { isSupported(it.uri) }
+    }
+
+    private fun isSupported(uri: String): Boolean {
+        val t = uri.trim().lowercase()
+        return t.startsWith("warp://") || t.startsWith("wireguard://") || t.contains("[interface]")
     }
 
     private fun tryFetch(urlStr: String): String? = try {
