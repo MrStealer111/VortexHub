@@ -2,339 +2,295 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VortexHub VPN - Premium UI Preview</title>
+<title>VortexHub — UI Preview</title>
 <style>
+@font-face{font-family:'Roboto';src:url('fonts/Roboto.ttf') format('truetype');font-weight:100 900;font-display:block}
+@font-face{font-family:'Roboto Mono';src:url('fonts/RobotoMono.ttf') format('truetype');font-weight:100 900;font-display:block}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#060b18;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;min-height:100vh;padding:20px;gap:24px;flex-wrap:wrap}
-.phone{width:390px;background:linear-gradient(180deg,#070E1F 0%,#0B1220 50%,#0F1B33 100%);border-radius:40px;overflow:hidden;border:1px solid #1E2D4A;box-shadow:0 32px 80px rgba(0,0,0,.6);position:relative}
-.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:28px;background:#000;border-radius:0 0 18px 18px;z-index:10}
-.statusbar{display:flex;justify-content:space-between;padding:14px 28px 8px;font-size:12px;color:#8EA0C2;font-weight:600}
-.screen{padding:0 20px 20px}
-.pill{display:flex;align-items:center;gap:6px;background:rgba(255,140,0,.12);border-radius:999px;padding:7px 14px;width:fit-content;margin:8px auto;font-size:11px;color:#FF8C00;letter-spacing:.5px;font-weight:700}
-.pill.off{background:rgba(142,160,194,.12);color:#8EA0C2}
-.dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
-.connect-wrap{position:relative;width:216px;height:216px;margin:14px auto;display:flex;align-items:center;justify-content:center}
-.glow{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,140,0,.28) 0%,transparent 70%);filter:blur(8px);animation:pulse 1.8s infinite alternate}
-.glow2{position:absolute;inset:16px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,0,.15) 0%,transparent 70%);filter:blur(6px)}
-@keyframes pulse{from{transform:scale(.92);opacity:.7}to{transform:scale(1.06);opacity:1}}
-.outer{width:200px;height:200px;border-radius:50%;background:linear-gradient(135deg,#FF8C00,#FF6B00,#FF4500);padding:2px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.outer.off{background:linear-gradient(135deg,#1B2540,#162040)}
-.inner{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 20%,#162040,#070E1F);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
-.icon{width:52px;height:52px;border-radius:50%;background:rgba(255,140,0,.14);display:flex;align-items:center;justify-content:center;font-size:22px}
-.icon.off{background:rgba(255,255,255,.04);color:#8EA0C2}
-.label{font-weight:800;letter-spacing:.8px;font-size:13px}
-.label.on{color:#FF8C00}
-.label.off{color:#E8EEF9}
-.tap{font-size:10px;letter-spacing:1.4px;color:#5B6B8A;font-weight:700}
-.status{font-size:22px;font-weight:800;text-align:center;margin-top:4px}
-.status.on{color:#FF8C00}
-.status.off{color:#E8EEF9}
-.sub{font-size:12px;color:#8EA0C2;text-align:center;margin-top:2px;display:flex;gap:6px;justify-content:center;align-items:center}
-.card{background:#121D36;border:1px solid #24324F;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-top:14px}
-.card.success{border-color:rgba(255,140,0,.35);box-shadow:0 8px 24px rgba(255,140,0,.12)}
-.flag{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#1E2F56,#162040);display:flex;align-items:center;justify-content:center;font-size:22px}
-.info{flex:1}
-.info span{font-size:10px;color:#8EA0C2;letter-spacing:.6px;font-weight:700}
-.info b{font-size:14px;display:block;color:#fff}
-.info small{font-size:11px;color:#5B6B8A}
-.manage{background:rgba(255,140,0,.14);color:#FF8C00;font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px}
-.stats{display:flex;gap:10px;margin-top:12px}
-.stat{flex:1;background:#121D36;border:1px solid #24324F;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
-.stat-top{font-size:10px;letter-spacing:.8px;color:#8EA0C2;font-weight:700;display:flex;align-items:center;gap:6px}
-.badge{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
-.val{font-size:18px;font-weight:800;color:#fff}
-.handshake{margin-top:10px;background:#121D36;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:11px;color:#8EA0C2}
-.secure{margin-top:8px;background:linear-gradient(90deg,#0A2E22,#0F3A2E);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:11px;color:#34D399;font-weight:600}
-.bottom{display:flex;justify-content:space-around;padding:12px 0 18px;border-top:1px solid #1E2D4A;margin-top:12px;background:#0B1220}
-.nav{font-size:10px;color:#5B6B8A;text-align:center;flex:1}
-.nav.active{color:#FF8C00}
-.nav-icon{font-size:18px;margin-bottom:4px}
-h2{font-size:20px;font-weight:800;margin:12px 0 4px;color:#fff}
-.subtext{font-size:12px;color:#8EA0C2;margin-bottom:12px}
-.tab-bar{display:flex;gap:8px;margin-bottom:16px}
-.tab{padding:8px 16px;border-radius:999px;font-size:12px;font-weight:700;background:#121D36;color:#8EA0C2;border:1px solid #24324F}
-.tab.active{background:linear-gradient(135deg,#FF8C00,#FF6B00);color:#fff;border-color:transparent}
-.server-item{background:#121D36;border:1px solid #24324F;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.server-item.selected{border-color:rgba(255,140,0,.5);box-shadow:0 0 20px rgba(255,140,0,.1)}
-.ping{font-size:11px;color:#FF8C00;font-weight:700;background:rgba(255,140,0,.12);padding:4px 8px;border-radius:8px}
-.star{color:#FFD700;font-size:16px}
-.setting-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #1E2D4A}
-.setting-label{font-size:14px;font-weight:600;color:#fff}
-.setting-desc{font-size:11px;color:#8EA0C2;margin-top:2px}
-.toggle{width:44px;height:24px;border-radius:12px;background:#2C2C2E;position:relative;cursor:pointer}
-.toggle.on{background:#FF8C00}
-.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
-.toggle.on::after{left:22px}
-.profile-card{background:#121D36;border:1px solid #24324F;border-radius:16px;padding:16px;margin-bottom:12px}
-.profile-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.profile-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#FF8C00,#FF6B00);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff}
-.profile-name{font-size:16px;font-weight:700;color:#fff}
-.profile-id{font-size:11px;color:#8EA0C2}
-.key-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0B1220;border-radius:10px;margin-top:8px}
-.key-label{font-size:11px;color:#8EA0C2}
-.key-value{font-size:12px;color:#fff;font-weight:600;font-family:monospace}
-.copy-btn{background:rgba(255,140,0,.14);color:#FF8C00;border:none;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer}
+html,body{width:1440px;height:1020px;overflow:hidden}
+body{background:#050505;color:#fff;font-family:'Roboto',sans-serif;-webkit-font-smoothing:antialiased;position:relative}
+body::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(900px 520px at 50% -8%,rgba(255,140,0,.16),transparent 62%),
+  radial-gradient(620px 420px at 8% 88%,rgba(255,107,0,.07),transparent 70%),
+  radial-gradient(620px 420px at 94% 92%,rgba(255,140,0,.06),transparent 70%);
+  pointer-events:none}
+body::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 78%);pointer-events:none}
+.stage{position:relative;z-index:2;padding-top:44px}
+.head{text-align:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:10px;font-weight:700;letter-spacing:3.6px;color:#FF8C00;text-transform:uppercase}
+.eyebrow i{width:6px;height:6px;border-radius:50%;background:#FF8C00;box-shadow:0 0 10px #FF8C00;display:block}
+h1{font-size:60px;line-height:1.02;font-weight:900;letter-spacing:-1.6px;margin-top:10px}
+h1 .hub{background:linear-gradient(100deg,#FFB13D,#FF8C00 55%,#FF6B00);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{font-size:15px;color:#8B8B88;margin-top:9px;letter-spacing:.1px}
+.chips{display:flex;gap:8px;justify-content:center;margin-top:15px}
+.chip{font-size:10.5px;font-weight:600;letter-spacing:.4px;color:#ACACAA;background:rgba(255,255,255,.035);border:1px solid #232323;border-radius:999px;padding:6px 12px}
+.chip b{color:#FF8C00;font-weight:800}
+.phones{display:flex;justify-content:center;gap:44px;margin-top:30px}
+.unit{display:flex;flex-direction:column;align-items:center}
+.phone{width:340px;height:714px;border-radius:53px;background:linear-gradient(175deg,#171717,#0a0a0a);border:1px solid #2b2b2b;padding:8px;position:relative;box-shadow:0 42px 90px rgba(0,0,0,.72),0 0 0 1px rgba(255,255,255,.02) inset}
+.phone::after{content:'';position:absolute;left:50%;transform:translateX(-50%);top:8px;width:98px;height:23px;background:#000;border-radius:0 0 15px 15px;z-index:30}
+.screen{position:relative;width:322px;height:696px;border-radius:46px;overflow:hidden;background:#0A0A0A}
+.ui{width:390px;height:844px;transform:scale(.82464);transform-origin:top left;position:relative;overflow:hidden;background:#0A0A0A}
+.cap{margin-top:20px;font-size:10.5px;font-weight:700;letter-spacing:2.4px;color:#6A6A68;text-transform:uppercase}
+.cap span{color:#FF8C00}
+/* status bar */
+.sbar{height:44px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 9px}
+.sbar .time{font-size:12.5px;font-weight:700;letter-spacing:.2px}
+.sbar .sys{display:flex;align-items:center;gap:5px}
+.sbar .sys svg{height:11px;width:auto;display:block}
+/* home */
+.homebody{height:800px;display:flex;flex-direction:column;padding-bottom:74px}
+.fg{flex-grow:1;min-height:0}
+.fg.a{flex-grow:1}
+.fg.b{flex-grow:1}
+.appbar{display:flex;align-items:center;padding:6px 16px 12px}
+.logo{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FF8C00,#FF6B00);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;margin-right:6px}
+.brand{font-size:24px;font-weight:900;letter-spacing:-.4px}
+.brand em{font-style:normal;color:#FF8C00}
+.topacts{margin-left:auto;display:flex;align-items:center;gap:20px;color:#8E8E93}
+.topacts svg{width:20px;height:20px}
+.server-card{margin:0 14px;background:#1C1C1E;border-radius:18px;padding:14px;display:flex;align-items:center;gap:12px}
+.server-ic{width:42px;height:42px;border-radius:50%;background:#2C2C2E;display:flex;align-items:center;justify-content:center;color:#DADADA}
+.server-ic svg{width:19px;height:19px}
+.server-info{flex:1;min-width:0}
+.server-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.server-sub{font-size:11px;color:#8E8E93;margin-top:2px}
+.server-state{text-align:right}
+.server-state .st{font-size:11.5px;font-weight:800;color:#00C853}
+.server-state .man{font-size:11.5px;font-weight:800;color:#FF8C00}
+.server-state .chev{font-size:14px;color:#8E8E93;margin-top:1px}
+.power{position:relative;height:220px;display:flex;align-items:center;justify-content:center;margin-top:8px;flex-shrink:0}
+.glow{position:absolute;left:50%;top:50%;width:220px;height:220px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,140,0,.32),transparent 68%);filter:blur(6px)}
+.glow2{position:absolute;left:50%;top:50%;width:196px;height:196px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,107,0,.22),transparent 70%);filter:blur(4px)}
+.dot{position:absolute;width:7px;height:7px;border-radius:50%;background:#FF8C00;box-shadow:0 0 8px rgba(255,140,0,.8)}
+.ring{position:relative;width:190px;height:190px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.ring.on{background:conic-gradient(from -35deg,#FF8C00,#FF6B00,#FFD700,#FF8C00);box-shadow:0 0 44px rgba(255,140,0,.28)}
+.ring.off{background:linear-gradient(135deg,#2A2A2E,#1C1C1E)}
+.core{width:164px;height:164px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 32% 22%,#FFF8E7,#E8E0D0 78%);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.core .badge{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,140,0,.18)}
+.core .badge svg{width:28px;height:28px;color:#FF8C00}
+.core .badge.off{background:rgba(28,28,30,.07)}
+.core .badge.off svg{width:32px;height:32px;color:#1C1C1E}
+.core .lbl{font-size:11px;font-weight:900;letter-spacing:.5px;margin-top:6px;color:#FF8C00}
+.core .lbl.off{color:#1C1C1E}
+.conn{font-size:16px;font-weight:500;color:#8E8E93;text-align:center;margin-top:16px}
+.conn-sub{font-size:12px;color:rgba(142,142,147,.7);text-align:center;margin-top:4px}
+.statrow{display:flex;gap:10px;margin:16px 20px 0}
+.stat{flex:1;background:#1C1C1E;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px}
+.stat .ar{font-size:12px;color:#8E8E93}
+.stat .val{font-size:13px;font-weight:700}
+.lat{display:flex;align-items:center;justify-content:space-between;margin:10px 20px 0;background:#1C1C1E;border-radius:12px;padding:10px 14px}
+.lat .l{display:flex;align-items:center;gap:8px;font-size:12px;color:#8E8E93;font-weight:500}
+.lat .l i{width:8px;height:8px;border-radius:50%;background:#00C853;display:block}
+.lat .r{font-size:13px;font-weight:700}
+/* tab bar */
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:72px;display:flex;align-items:center;justify-content:center;background:#0A0A0A;z-index:10}
+.tabpill{display:flex;align-items:center;gap:4px;background:#1E1E1E;border-radius:999px;padding:6px}
+.tabitem{display:flex;align-items:center;gap:6px;padding:10px 14px;border-radius:999px;color:#8EA0C2}
+.tabitem svg{width:18px;height:18px}
+.tabitem.act{background:linear-gradient(100deg,#FF8C00,#FF6B00);color:#fff;padding:10px 18px}
+.tabitem.act .tl{font-size:12px;font-weight:700;letter-spacing:.3px}
+.tabitem .ar{font-size:12px;font-weight:700}
+.homebar{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);width:134px;height:5px;border-radius:4px;background:rgba(255,255,255,.38);z-index:20}
+/* configs */
+.chead{display:flex;align-items:center;padding:12px 12px 8px}
+.chead h2{font-size:22px;font-weight:700}
+.chead .acts{margin-left:auto;display:flex;align-items:center;gap:10px;color:#fff}
+.chead .icbtn{width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+.chead .icbtn svg{width:19px;height:19px}
+.chead .plus{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center}
+.chead .plus svg{width:16px;height:16px}
+.tabs{display:flex;gap:4px;margin:2px 14px 0;background:#1E1E1E;border-radius:999px;padding:4px}
+.tab{flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:#8E8E93;border-radius:999px}
+.tab.act{background:#3A2A14;color:#FF8C00}
+.actions{display:flex;gap:10px;margin:12px 14px 0}
+.action{flex:1;display:flex;align-items:center;gap:8px;background:#1C1C1E;border:1px solid #2C2C2E;border-radius:14px;padding:12px;font-size:12px;font-weight:500;color:#fff}
+.action svg{width:14px;height:14px;color:#8E8E93}
+.action .sp{margin-left:auto;color:#8E8E93;font-size:12px}
+.list{margin:12px 12px 0;display:flex;flex-direction:column;gap:10px}
+.srv{display:flex;align-items:center;background:#1C1C1E;border:1px solid #2C2C2E;border-radius:16px;padding:14px 16px}
+.srv.act{background:#2A2520;border-color:rgba(255,140,0,.4)}
+.srv-ic{width:36px;height:36px;border-radius:50%;background:#2C2C2E;display:flex;align-items:center;justify-content:center;margin-right:12px;color:#DADADA}
+.srv-ic svg{width:17px;height:17px}
+.srv-info{flex:1;min-width:0}
+.srv-name{font-size:15px;font-weight:600}
+.srv-sub{font-size:12px;font-weight:500;margin-top:2px}
+.green{color:#00C853}.amber{color:#FFAB00}.gray{color:#8E8E93}
+.srv-right{color:#8E8E93;font-size:18px;display:flex;align-items:center}
+.okdot{width:20px;height:20px;border-radius:50%;background:rgba(0,200,83,.15);display:flex;align-items:center;justify-content:center;color:#00C853}
+.okdot svg{width:11px;height:11px}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.9 5.7 3.9 9S14.6 18.4 12 21c-2.6-2.6-3.9-5.7-3.9-9S9.4 5.6 12 3Z"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H6.8A4.8 4.8 0 0 1 6 9.4 6.5 6.5 0 0 1 18.6 10a4.5 4.5 0 0 1-1.1 9Z"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5 7.2 7.2M16.8 16.8l1.7 1.7M18.5 5.5 16.8 7.2M7.2 16.8l-1.7 1.7"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v5M14 11v5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-sort" viewBox="0 0 24 24"><path d="M8 4v16M5 17l3 3 3-3M16 20V4M13 7l3-3 3 3"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></symbol>
+<symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2.8v8.6"/><path d="M6.4 6.6a7.8 7.8 0 1 0 11.2 0"/></symbol>
+<symbol id="i-sig" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor" stroke="none"/><rect x="5" y="6" width="3" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="10" y="3.5" width="3" height="8.5" rx="1" fill="currentColor" stroke="none"/><rect x="15" y="1" width="3" height="11" rx="1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 16 12"><path d="M1.5 4.2a10 10 0 0 1 13 0M4 6.9a6.3 6.3 0 0 1 8 0M6.6 9.4a2.7 2.7 0 0 1 2.8 0"/><circle cx="8" cy="11" r=".7" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-batt" viewBox="0 0 25 12"><rect x=".7" y=".7" width="20" height="10.6" rx="3"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.6" fill="currentColor" stroke="none"/><path d="M22.4 4v4"/></symbol>
+</defs></svg>
 
-<!-- Home Screen - Connected -->
-<div class="phone">
-  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
-  <div class="screen">
-    <div style="text-align:center;margin-bottom:8px">
-      <div style="font-size:24px;font-weight:900;color:#FF8C00;letter-spacing:1px">VORTEXHUB</div>
-      <div style="font-size:11px;color:#8EA0C2;letter-spacing:.5px">Premium VPN</div>
+<div class="stage">
+  <div class="head">
+    <div class="eyebrow"><i></i>Android VPN · Design Preview</div>
+    <h1>Vortex<span class="hub">Hub</span></h1>
+    <div class="tag">Private by default. Fast by design.</div>
+    <div class="chips">
+      <div class="chip"><b>●</b> WireGuard</div>
+      <div class="chip"><b>●</b> Cloudflare WARP</div>
+      <div class="chip"><b>●</b> Split Tunneling</div>
     </div>
-    
-    <div class="pill"><div class="dot"></div>CONNECTED</div>
-    
-    <div class="connect-wrap">
-      <div class="glow"></div>
-      <div class="glow2"></div>
-      <div class="outer">
-        <div class="inner">
-          <div class="icon">⚡</div>
-          <div class="label on">CONNECTED</div>
-          <div class="tap">TAP TO DISCONNECT</div>
+  </div>
+
+  <div class="phones">
+
+    <!-- HOME CONNECTED -->
+    <div class="unit">
+      <div class="phone"><div class="screen"><div class="ui">
+        <div class="sbar">
+          <div class="time">9:41</div>
+          <div class="sys"><svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.1"><use href="#i-sig"/></svg><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><use href="#i-wifi"/></svg><svg viewBox="0 0 25 12" fill="none" stroke="currentColor" stroke-width="1"><use href="#i-batt"/></svg></div>
         </div>
-      </div>
-    </div>
-    
-    <div class="status on">🔒 Encrypted</div>
-    <div class="sub">🛡️ AES-256 • Xray Core</div>
-    
-    <div class="card success">
-      <div class="flag">🇬🇧</div>
-      <div class="info">
-        <span>UK - LONDON</span>
-        <b>Shields Double VPN</b>
-        <small>Server #1 • 23ms latency</small>
-      </div>
-      <div class="manage">Active</div>
-    </div>
-    
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-top"><div class="badge" style="background:rgba(16,185,129,.15);color:#10B981">↓</div> Download</div>
-        <div class="val">2.4 GB</div>
-      </div>
-      <div class="stat">
-        <div class="stat-top"><div class="badge" style="background:rgba(59,130,246,.15);color:#3B82F6">↑</div> Upload</div>
-        <div class="val">856 MB</div>
-      </div>
-    </div>
-    
-    <div class="handshake">🕐 Session: 2h 34m • Last handshake: 5s ago</div>
-    <div class="secure">🛡️ Kill Switch Active • DNS: 1.1.1.1</div>
-    
-    <div class="bottom">
-      <div class="nav active"><div class="nav-icon">🏠</div>Home</div>
-      <div class="nav"><div class="nav-icon">⚙️</div>Configs</div>
-      <div class="nav"><div class="nav-icon">👤</div>Person</div>
-    </div>
-  </div>
-</div>
-
-<!-- Servers Screen -->
-<div class="phone">
-  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
-  <div class="screen">
-    <h2>Configs</h2>
-    <div class="subtext">Manage your VPN servers</div>
-    
-    <div class="tab-bar">
-      <div class="tab active">Free</div>
-      <div class="tab">Favorites</div>
-      <div class="tab">Personal</div>
-    </div>
-    
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:12px;color:#8EA0C2">3 servers available</div>
-      <div style="display:flex;gap:8px">
-        <div style="background:#FF8C00;color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700">+ Add</div>
-        <div style="background:#121D36;color:#8EA0C2;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid #24324F">📡 QR</div>
-      </div>
-    </div>
-    
-    <div class="server-item selected">
-      <div class="flag">🇬🇧</div>
-      <div class="info" style="flex:1">
-        <span>SHIELDS DOUBLE VPN</span>
-        <b>UK - London</b>
-        <small>Shadowsocks • Xray Core</small>
-      </div>
-      <div class="ping">23ms</div>
-      <div class="star">★</div>
-    </div>
-    
-    <div class="server-item">
-      <div class="flag">🇺🇸</div>
-      <div class="info" style="flex:1">
-        <span>WIREGUARD FREE</span>
-        <b>US - New York</b>
-        <small>WireGuard • WARP</small>
-      </div>
-      <div class="ping">45ms</div>
-      <div class="star" style="color:#5B6B8A">☆</div>
-    </div>
-    
-    <div class="server-item">
-      <div class="flag">🇩🇪</div>
-      <div class="info" style="flex:1">
-        <span>PREMIUM SERVER</span>
-        <b>Germany - Frankfurt</b>
-        <small>VLESS • Xray Core</small>
-      </div>
-      <div class="ping">38ms</div>
-      <div class="star" style="color:#5B6B8A">☆</div>
-    </div>
-    
-    <div class="server-item">
-      <div class="flag">🇯🇵</div>
-      <div class="info" style="flex:1">
-        <span>LOW LATENCY</span>
-        <b>Japan - Tokyo</b>
-        <small>VMess • Xray Core</small>
-      </div>
-      <div class="ping">67ms</div>
-      <div class="star" style="color:#5B6B8A">☆</div>
-    </div>
-    
-    <div style="background:#121D36;border:1px solid #24324F;border-radius:12px;padding:12px;margin-top:12px;display:flex;align-items:center;gap:10px">
-      <div style="font-size:20px">⚡</div>
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:700;color:#FF8C00">Auto-Select Best Server</div>
-        <div style="font-size:11px;color:#8EA0C2">Ping all servers and connect to fastest</div>
-      </div>
-    </div>
-    
-    <div class="bottom">
-      <div class="nav"><div class="nav-icon">🏠</div>Home</div>
-      <div class="nav active"><div class="nav-icon">⚙️</div>Configs</div>
-      <div class="nav"><div class="nav-icon">👤</div>Person</div>
-    </div>
-  </div>
-</div>
-
-<!-- Settings Screen -->
-<div class="phone">
-  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
-  <div class="screen">
-    <h2>Settings</h2>
-    <div class="subtext">VPN & Network Configuration</div>
-    
-    <div class="setting-row">
-      <div>
-        <div class="setting-label">Auto-Connect</div>
-        <div class="setting-desc">Connect on app start</div>
-      </div>
-      <div class="toggle on"></div>
-    </div>
-    
-    <div class="setting-row">
-      <div>
-        <div class="setting-label">Auto-Reconnect</div>
-        <div class="setting-desc">Retry on connection drop</div>
-      </div>
-      <div class="toggle on"></div>
-    </div>
-    
-    <div class="setting-row">
-      <div>
-        <div class="setting-label">Kill Switch</div>
-        <div class="setting-desc">Block internet when VPN drops</div>
-      </div>
-      <div class="toggle on"></div>
-    </div>
-    
-    <div class="setting-row">
-      <div>
-        <div class="setting-label">Split Tunneling</div>
-        <div class="setting-desc">Route specific apps through VPN</div>
-      </div>
-      <div class="toggle"></div>
-    </div>
-    
-    <div style="background:#121D36;border:1px solid #24324F;border-radius:16px;padding:16px;margin-top:16px">
-      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">DNS Settings</div>
-      <div style="display:flex;gap:8px">
-        <div style="flex:1;background:linear-gradient(135deg,#FF8C00,#FF6B00);color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700">Cloudflare<br><span style="font-size:10px;opacity:.8">1.1.1.1</span></div>
-        <div style="flex:1;background:#1E2D4A;color:#8EA0C2;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700">Google<br><span style="font-size:10px;opacity:.8">8.8.8.8</span></div>
-      </div>
-    </div>
-    
-    <div style="background:#121D36;border:1px solid #24324F;border-radius:16px;padding:16px;margin-top:12px">
-      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:8px">About VortexHub</div>
-      <div style="font-size:12px;color:#8EA0C2">Version 1.0.0</div>
-      <div style="font-size:11px;color:#5B6B8A;margin-top:4px">Xray Core • WireGuard • WARP</div>
-    </div>
-    
-    <div class="bottom">
-      <div class="nav"><div class="nav-icon">🏠</div>Home</div>
-      <div class="nav"><div class="nav-icon">⚙️</div>Configs</div>
-      <div class="nav active"><div class="nav-icon">👤</div>Person</div>
-    </div>
-  </div>
-</div>
-
-<!-- Person Screen -->
-<div class="phone">
-  <div class="statusbar"><span>9:41</span><span>⚡ 85%</span></div>
-  <div class="screen">
-    <h2>VortexHub</h2>
-    <div class="subtext">My Keys • Update without rebuild</div>
-    
-    <div style="background:#121D36;border:1px solid #24324F;border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#fff">Device Hardware ID</div>
-      <div class="key-row" style="margin-top:8px">
-        <div class="key-value">a1b2c3d4e5f6g7h8</div>
-        <button class="copy-btn">📋 Copy</button>
-      </div>
-    </div>
-    
-    <div style="background:#121D36;border:1px solid #24324F;border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#fff">Free Server URL</div>
-      <div style="background:#0B1220;border-radius:8px;padding:10px;margin-top:8px;font-size:11px;color:#8EA0C2;font-family:monospace">https://raw.githubusercontent.com/...</div>
-      <button class="copy-btn" style="width:100%;margin-top:8px;padding:10px">Save & Refresh Free</button>
-    </div>
-    
-    <div style="background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,107,0,.12));border:1px solid rgba(255,140,0,.3);border-radius:14px;padding:16px;margin-bottom:12px">
-      <div style="font-size:16px;font-weight:800;color:#fff">VortexHub Premium</div>
-      <div style="font-size:12px;color:#FF8C00;margin-top:4px">Unlock premium servers</div>
-      <div style="text-align:right;margin-top:8px;font-size:12px;font-weight:700;color:#FF8C00">Upgrade →</div>
-    </div>
-    
-    <div style="background:#121D36;border:1px solid #24324F;border-radius:14px;padding:16px;margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;color:#fff">Settings</div>
-      <div style="font-size:11px;color:#8EA0C2;margin-top:2px">VPN, DNS, Auto-connect</div>
-      <div style="text-align:right;margin-top:8px;font-size:14px;color:#8EA0C2">→</div>
-    </div>
-    
-    <div style="font-size:16px;font-weight:800;color:#fff;margin-top:16px">My Keys</div>
-    <div style="font-size:12px;color:#8EA0C2">2 configs saved (IP hidden)</div>
-    
-    <div class="profile-card" style="margin-top:12px">
-      <div class="profile-header">
-        <div class="flag" style="width:40px;height:40px;font-size:18px">🇬🇧</div>
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#fff">UK - London Shield</div>
-          <div style="font-size:11px;color:#8EA0C2">Shadowsocks • Xray</div>
+        <div class="homebody">
+        <div class="appbar">
+          <div class="logo">V</div><div class="brand">Vortex<em>Hub</em></div>
+          <div class="topacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-menu"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-gear"/></svg></div>
         </div>
-        <button class="copy-btn" style="margin-left:auto">📋</button>
-        <button style="background:rgba(255,82,82,.14);color:#FF5252;border:none;padding:6px 10px;border-radius:8px;font-size:14px;cursor:pointer">🗑️</button>
-      </div>
-      <div style="background:#0B1220;border-radius:8px;padding:8px;font-size:11px;color:#5B6B8A;font-family:monospace">ss://aes-256-gcm:...@uk1.example.com:443</div>
+        <div class="server-card">
+          <div class="server-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><use href="#i-globe"/></svg></div>
+          <div class="server-info"><div class="server-name">WarpGuard Free</div><div class="server-sub">WARP · Cloudflare</div></div>
+          <div class="server-state"><div class="st">✓ Connected</div><div class="chev">›</div></div>
+        </div>
+        <div class="fg a"></div>
+        <div class="power">
+          <div class="glow"></div><div class="glow2"></div>
+          <div class="dot" style="left:296.5px;top:106.5px"></div>
+          <div class="dot" style="left:265.7px;top:180.7px"></div>
+          <div class="dot" style="left:191.5px;top:211.5px"></div>
+          <div class="dot" style="left:117.3px;top:180.7px"></div>
+          <div class="dot" style="left:86.5px;top:106.5px"></div>
+          <div class="dot" style="left:117.3px;top:32.3px"></div>
+          <div class="dot" style="left:191.5px;top:1.5px"></div>
+          <div class="dot" style="left:265.7px;top:32.3px"></div>
+          <div class="ring on"><div class="core">
+            <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg></div>
+            <div class="lbl">Connected</div>
+          </div></div>
+        </div>
+        <div class="conn">Connected</div>
+        <div class="conn-sub">Connected for 12m 34s</div>
+        <div class="statrow">
+          <div class="stat"><span class="ar">↓</span><span class="val">24.8 MB</span></div>
+          <div class="stat"><span class="ar">↑</span><span class="val">4.2 MB</span></div>
+        </div>
+        <div class="lat"><div class="l"><i></i>Latency 1.1.1.1</div><div class="r">48 ms</div></div>
+        <div class="fg b"></div>
+        </div>
+
+        <div class="tabbar"><div class="tabpill">
+          <div class="tabitem act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#i-home"/></svg><span class="tl">Home</span></div>
+          <div class="tabitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-globe"/></svg></div>
+          <div class="tabitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-cloud"/></svg></div>
+        </div></div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">Home <span>·</span> Connected</div>
     </div>
-    
-    <div class="bottom">
-      <div class="nav"><div class="nav-icon">🏠</div>Home</div>
-      <div class="nav"><div class="nav-icon">⚙️</div>Configs</div>
-      <div class="nav active"><div class="nav-icon">👤</div>Person</div>
+
+    <!-- HOME DISCONNECTED -->
+    <div class="unit">
+      <div class="phone"><div class="screen"><div class="ui">
+        <div class="sbar">
+          <div class="time">9:41</div>
+          <div class="sys"><svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.1"><use href="#i-sig"/></svg><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><use href="#i-wifi"/></svg><svg viewBox="0 0 25 12" fill="none" stroke="currentColor" stroke-width="1"><use href="#i-batt"/></svg></div>
+        </div>
+        <div class="homebody">
+        <div class="appbar">
+          <div class="logo">V</div><div class="brand">Vortex<em>Hub</em></div>
+          <div class="topacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-menu"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-gear"/></svg></div>
+        </div>
+        <div class="server-card">
+          <div class="server-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><use href="#i-globe"/></svg></div>
+          <div class="server-info"><div class="server-name">WarpGuard Free</div><div class="server-sub">WARP · Cloudflare</div></div>
+          <div class="server-state"><div class="man">Manage</div><div class="chev">›</div></div>
+        </div>
+        <div class="fg a"></div>
+        <div class="power">
+          <div class="ring off"><div class="core">
+            <div class="badge off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-power"/></svg></div>
+            <div class="lbl off">Tap to Connect</div>
+          </div></div>
+        </div>
+        <div class="conn">Disconnected</div>
+        <div class="conn-sub">Select a server &amp; tap to start</div>
+        <div class="fg b"></div>
+        </div>
+
+        <div class="tabbar"><div class="tabpill">
+          <div class="tabitem act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#i-home"/></svg><span class="tl">Home</span></div>
+          <div class="tabitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-globe"/></svg></div>
+          <div class="tabitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-cloud"/></svg></div>
+        </div></div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">Home <span>·</span> Disconnected</div>
     </div>
+
+    <!-- CONFIGS -->
+    <div class="unit">
+      <div class="phone"><div class="screen"><div class="ui">
+        <div class="sbar">
+          <div class="time">9:41</div>
+          <div class="sys"><svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.1"><use href="#i-sig"/></svg><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><use href="#i-wifi"/></svg><svg viewBox="0 0 25 12" fill="none" stroke="currentColor" stroke-width="1"><use href="#i-batt"/></svg></div>
+        </div>
+        <div class="chead">
+          <h2>Configs</h2>
+          <div class="acts">
+            <div class="icbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-trash"/></svg></div>
+            <div class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-plus"/></svg></div>
+            <div class="icbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-qr"/></svg></div>
+          </div>
+        </div>
+        <div class="tabs"><div class="tab act">Free</div><div class="tab">★ Favorites</div><div class="tab">Personal</div></div>
+        <div class="actions">
+          <div class="action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#i-clock"/></svg>Check Pings</div>
+          <div class="action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#i-sort"/></svg>Sort By Time<span class="sp">∨</span></div>
+        </div>
+        <div class="list">
+          <div class="srv act">
+            <div class="srv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><use href="#i-globe"/></svg></div>
+            <div class="srv-info"><div class="srv-name">WarpGuard</div><div class="srv-sub green">WARP · 48 ms</div></div>
+            <div class="srv-right"><div class="okdot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg></div></div>
+          </div>
+          <div class="srv">
+            <div class="srv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><use href="#i-globe"/></svg></div>
+            <div class="srv-info"><div class="srv-name">UK</div><div class="srv-sub amber">Shadowsocks · 210 ms</div></div>
+            <div class="srv-right">›</div>
+          </div>
+        </div>
+
+        <div class="tabbar"><div class="tabpill">
+          <div class="tabitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-home"/></svg></div>
+          <div class="tabitem act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#i-globe"/></svg><span class="tl">Configs</span><span class="ar">→</span></div>
+          <div class="tabitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-cloud"/></svg></div>
+        </div></div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">Configs <span>·</span> Free servers</div>
+    </div>
+
   </div>
 </div>
-
 </body>
 </html>

@@ -1,7 +1,7 @@
 # VortexHub — Premium Android VPN
 
 <p align="center">
-  <img src="ui_preview.png" width="800" alt="VortexHub UI Preview">
+  <img src="ui_preview.png" width="1000" alt="VortexHub UI Preview">
 </p>
 
 <p align="center">
@@ -12,7 +12,10 @@
 
 ## 🎨 UI Preview
 
-![VortexHub UI](ui_preview.png)
+<p align="center">
+  <img src="ui_preview.png" width="1000" alt="VortexHub UI — Home connected, Home disconnected, Configs">
+</p>
+<p align="center"><sub>Home — Connected &nbsp;·&nbsp; Home — Disconnected &nbsp;·&nbsp; Configs</sub></p>
 
 ---
 
@@ -22,19 +25,15 @@
 - **AES-256 Encryption** — Keystore-encrypted configs
 - **Kill Switch** — Block internet when VPN drops
 - **Anti-Root Detection** — Security hardening
-- **SSL Pinning** — Certificate transparency
-- **Debug Log Strip** — No sensitive data in logs
 
 ### 🌐 Protocols
-- **Shadowsocks** — Xray Core
-- **VLESS** — Xray Core with Reality
-- **VMess** — Xray Core
-- **Trojan** — Xray Core
-- **WireGuard** — GoBackend (userspace)
+- **WireGuard** — GoBackend (userspace) ✅
+- **Cloudflare WARP** — auto key generation ✅
+- **VLESS / VMess / Trojan / Shadowsocks** — planned (Xray core integration)
 
 ### ⚡ Performance
-- **Xray Core** — Real process management
 - **WARP Integration** — Cloudflare network
+- **Real tunnel stats** — live handshake, RX/TX
 - **Split Tunneling** — Exclude/Include apps
 - **Auto-Reconnect** — Retry on failure
 - **Latency Display** — Real-time ping
@@ -64,7 +63,7 @@
 |---|---|
 | Language | Kotlin 2.1 |
 | UI | Jetpack Compose (Material 3) |
-| VPN Engine | WireGuard GoBackend + Xray Core |
+| VPN Engine | WireGuard GoBackend + Cloudflare WARP |
 | Camera | CameraX + MLKit Barcode |
 | Billing | Google Play Billing 7.0 |
 | Persistence | DataStore Preferences |
