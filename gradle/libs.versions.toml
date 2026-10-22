@@ -12,6 +12,9 @@ camera = "1.4.1"
 barcode = "17.3.0"
 billing = "7.0.0"
 securityCrypto = "1.0.0"
+testJunit = "1.2.1"
+testRunner = "1.6.2"
+testCore = "1.6.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +34,9 @@ camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "
 barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "barcode" }
 billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "testJunit" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
+androidx-test-core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "testCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

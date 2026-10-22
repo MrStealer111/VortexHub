@@ -28,6 +28,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VPNMobile">
 
+        <service
+            android:name=".vpn.ShadowsocksVpnService"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="VPN tunnel for Shadowsocks connections" />
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

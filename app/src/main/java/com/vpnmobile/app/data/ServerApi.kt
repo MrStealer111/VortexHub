@@ -18,7 +18,8 @@ object ServerApi {
 
     private fun isSupported(uri: String): Boolean {
         val t = uri.trim().lowercase()
-        return t.startsWith("warp://") || t.startsWith("wireguard://") || t.contains("[interface]")
+        return t.startsWith("warp://") || t.startsWith("wireguard://") || t.contains("[interface]") ||
+            (t.startsWith("ss://") && ShadowsocksUri.parse(uri) != null)
     }
 
     private fun tryFetch(urlStr: String): String? = try {

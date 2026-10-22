@@ -1,9 +1,12 @@
 package com.vpnmobile.app.vpn
 
 import android.content.Context
+import android.net.TrafficStats
+import android.os.Process
 import android.util.Log
 import com.vpnmobile.app.data.ConfigTools
 import com.vpnmobile.app.data.PremiumManager
+import com.vpnmobile.app.data.ShadowsocksUri
 import com.vpnmobile.app.data.TunnelProfile
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Statistics
@@ -18,10 +21,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.net.InetAddress
 
 enum class VpnState { DISCONNECTED, CONNECTING, CONNECTED }
@@ -45,6 +50,9 @@ class VpnConnectionManager(private val context: Context) {
     val status: StateFlow<VpnStatus> = _status.asStateFlow()
 
     private var statsJob: Job? = null
+    private var activeEngine = Engine.NONE
+
+    private enum class Engine { NONE, WIREGUARD, SHADOWSOCKS }
 
     private val tunnel = object : Tunnel {
         override fun getName(): String = TUNNEL_NAME
@@ -70,9 +78,9 @@ class VpnConnectionManager(private val context: Context) {
         "unknown"
     }
 
-    private fun isObfuscatedUri(text: String): Boolean {
+    private fun isUnsupportedUri(text: String): Boolean {
         val t = text.trim()
-        return t.startsWith("ss://", true) || t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)
+        return t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)
     }
 
     private fun isAutoWarp(text: String): Boolean {
@@ -106,22 +114,27 @@ class VpnConnectionManager(private val context: Context) {
 
         val configText = profile.configText.trim()
         if (configText.isEmpty()) {
-            throw Exception("Empty configuration — Import a WireGuard config or use WARP")
+            throw Exception("Empty configuration — Import a WireGuard config, a Shadowsocks link, or use WARP")
         }
-        if (isObfuscatedUri(configText) && !isAutoWarp(configText)) {
-            throw Exception("This protocol is not supported in this build yet. Please use WireGuard or WARP.")
+        if (isUnsupportedUri(configText) && !isAutoWarp(configText)) {
+            throw Exception("This protocol is not supported in this build yet. Please use WireGuard, Shadowsocks, or WARP.")
         }
 
         _status.update { it.copy(state = VpnState.CONNECTING, profileId = profile.id) }
 
         try {
-            if (isAutoWarp(configText)) {
-                connectViaWarp(profile, splitEnabled, splitMode, excludedApps)
-            } else {
-                connectViaWireGuard(profile, killSwitch, splitEnabled, splitMode, excludedApps)
+            when {
+                isAutoWarp(configText) -> connectViaWarp(profile, splitEnabled, splitMode, excludedApps)
+                ShadowsocksUri.isShadowsocks(configText) -> connectViaShadowsocks(profile, splitEnabled, splitMode, excludedApps)
+                else -> connectViaWireGuard(profile, killSwitch, splitEnabled, splitMode, excludedApps)
             }
         } catch (e: Exception) {
             stopStatsPolling()
+            if (ShadowsocksRuntime.state.value != VpnState.DISCONNECTED) {
+                ShadowsocksVpnService.stop(appContext)
+                ShadowsocksRuntime.reset()
+            }
+            activeEngine = Engine.NONE
             VpnNotification.cancel(appContext)
             _status.value = VpnStatus()
             throw e
@@ -151,6 +164,7 @@ class VpnConnectionManager(private val context: Context) {
         withContext(Dispatchers.IO) {
             backend.setState(tunnel, State.UP, finalConfig)
         }
+        activeEngine = Engine.WIREGUARD
         _status.update {
             it.copy(
                 state = VpnState.CONNECTED,
@@ -179,11 +193,48 @@ class VpnConnectionManager(private val context: Context) {
         withContext(Dispatchers.IO) {
             backend.setState(tunnel, State.UP, finalConfig)
         }
+        activeEngine = Engine.WIREGUARD
         _status.update {
             it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
         }
         VpnNotification.show(appContext, profile.name, 0, 0, true)
         startStatsPolling(profile.name)
+    }
+
+    private suspend fun connectViaShadowsocks(
+        profile: TunnelProfile,
+        splitEnabled: Boolean,
+        splitMode: String,
+        excludedApps: Set<String>,
+    ) {
+        if (!connectivityCheck()) {
+            throw Exception("No internet connection — Check your network")
+        }
+
+        val config = ShadowsocksUri.parse(profile.configText)
+            ?: throw Exception("Invalid Shadowsocks link — expected ss://method:password@host:port")
+
+        Log.d(TAG, "Connecting Shadowsocks to ${config.host}:${config.port}")
+        ShadowsocksRuntime.reset()
+        ShadowsocksVpnService.start(appContext, profile.name, config, splitEnabled, splitMode, excludedApps)
+
+        val result = withTimeoutOrNull(25_000) {
+            ShadowsocksRuntime.state.first {
+                it == VpnState.CONNECTED || (it == VpnState.DISCONNECTED && ShadowsocksRuntime.lastError != null)
+            }
+        }
+        if (result != VpnState.CONNECTED) {
+            ShadowsocksVpnService.stop(appContext)
+            throw Exception(ShadowsocksRuntime.lastError ?: "Shadowsocks connection timed out")
+        }
+
+        activeEngine = Engine.SHADOWSOCKS
+        _status.update {
+            it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
+        }
+        VpnNotification.show(appContext, profile.name, 0, 0, true)
+        startShadowsocksStatsPolling(profile.name)
+        Log.d(TAG, "Shadowsocks tunnel connected")
     }
 
     private fun applySplitTunnel(
@@ -214,11 +265,18 @@ class VpnConnectionManager(private val context: Context) {
         Log.d(TAG, "Disconnecting VPN")
         stopStatsPolling()
         VpnNotification.cancel(appContext)
+        val shadowsocksActive = activeEngine == Engine.SHADOWSOCKS ||
+            ShadowsocksRuntime.state.value != VpnState.DISCONNECTED
+        if (shadowsocksActive) {
+            ShadowsocksVpnService.stop(appContext)
+            ShadowsocksRuntime.reset()
+        }
         try {
             withContext(Dispatchers.IO) {
                 backend.setState(tunnel, State.DOWN, null)
             }
         } catch (_: Exception) {}
+        activeEngine = Engine.NONE
         _status.value = VpnStatus()
         Log.d(TAG, "VPN disconnected")
     }
@@ -241,6 +299,27 @@ class VpnConnectionManager(private val context: Context) {
                     if (profileName.isNotBlank()) VpnNotification.show(appContext, profileName, rx, tx, true)
                 } catch (_: Exception) {
                 }
+                delay(2_000)
+            }
+        }
+    }
+
+    private fun startShadowsocksStatsPolling(profileName: String) {
+        stopStatsPolling()
+        val uid = Process.myUid()
+        val baseRx = TrafficStats.getUidRxBytes(uid).takeIf { it >= 0 } ?: 0L
+        val baseTx = TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 } ?: 0L
+        statsJob = scope.launch {
+            while (isActive) {
+                if (ShadowsocksRuntime.state.value != VpnState.CONNECTED) {
+                    VpnNotification.cancel(appContext)
+                    _status.value = VpnStatus()
+                    break
+                }
+                val rx = (TrafficStats.getUidRxBytes(uid).takeIf { it >= 0 }?.minus(baseRx) ?: 0L).coerceAtLeast(0L)
+                val tx = (TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 }?.minus(baseTx) ?: 0L).coerceAtLeast(0L)
+                _status.update { it.copy(rxBytes = rx, txBytes = tx) }
+                VpnNotification.show(appContext, profileName, rx, tx, true)
                 delay(2_000)
             }
         }

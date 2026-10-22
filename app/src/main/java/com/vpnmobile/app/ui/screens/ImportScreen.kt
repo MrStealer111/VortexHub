@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vpnmobile.app.data.ShadowsocksUri
 import com.vpnmobile.app.ui.MainViewModel
 import com.vpnmobile.app.ui.effects.GlassPrimaryButton
 
@@ -60,6 +61,7 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
         return when (protocol) {
             "WARP" -> if (!t.startsWith("warp://")) "WARP config must start with warp://" else null
             "WireGuard" -> if (!t.startsWith("wireguard://") && !t.contains("[Interface]")) "WireGuard config must contain [Interface] or start with wireguard://" else null
+            "Shadowsocks" -> if (ShadowsocksUri.parse(t) == null) "Invalid Shadowsocks link — expected ss://method:password@host:port" else null
             else -> null
         }
     }
@@ -82,7 +84,7 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                     Text("Protocol", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93), fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                        listOf("WireGuard", "WARP").forEach { p ->
+                        listOf("WireGuard", "WARP", "Shadowsocks").forEach { p ->
                             FilterChip(
                                 selected = protocol == p, onClick = { protocol = p; error = validate(uri) },
                                 label = { Text(p, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
@@ -97,15 +99,44 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
             Spacer(Modifier.height(14.dp))
             OutlinedTextField(
                 value = name, onValueChange = { name = it }, modifier = Modifier.fillMaxWidth(),
-                label = { Text("Name", color = Color(0xFF8E8E93)) }, placeholder = { Text("e.g. My WireGuard", color = Color(0xFF5C5C5E)) },
+                label = { Text("Name", color = Color(0xFF8E8E93)) },
+                placeholder = {
+                    Text(
+                        when (protocol) {
+                            "Shadowsocks" -> "e.g. Outline Server"
+                            "WARP" -> "e.g. WARP"
+                            else -> "e.g. My WireGuard"
+                        },
+                        color = Color(0xFF5C5C5E),
+                    )
+                },
                 singleLine = true, shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFFFF8C00), unfocusedBorderColor = Color(0xFF3A3A3C), focusedTextColor = Color.White, unfocusedTextColor = Color.White, cursorColor = Color(0xFFFF8C00), focusedContainerColor = Color(0xFF1C1C1E), unfocusedContainerColor = Color(0xFF1C1C1E)),
             )
             Spacer(Modifier.height(14.dp))
             OutlinedTextField(
                 value = uri, onValueChange = { uri = it; error = validate(it) }, modifier = Modifier.fillMaxWidth(),
-                label = { Text(if (protocol == "WARP") "WARP Config" else "WireGuard Config", color = Color(0xFF8E8E93)) },
-                placeholder = { Text(if (protocol == "WARP") "warp://auto" else "[Interface]\nPrivateKey = ...\nAddress = ...\n[Peer]\nPublicKey = ...\nEndpoint = host:port", color = Color(0xFF5C5C5E), fontSize = 12.sp) },
+                label = {
+                    Text(
+                        when (protocol) {
+                            "WARP" -> "WARP Config"
+                            "Shadowsocks" -> "Shadowsocks Link"
+                            else -> "WireGuard Config"
+                        },
+                        color = Color(0xFF8E8E93),
+                    )
+                },
+                placeholder = {
+                    Text(
+                        when (protocol) {
+                            "WARP" -> "warp://auto"
+                            "Shadowsocks" -> "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwYXNzd29yZA@host:port/?outline=1"
+                            else -> "[Interface]\nPrivateKey = ...\nAddress = ...\n[Peer]\nPublicKey = ...\nEndpoint = host:port"
+                        },
+                        color = Color(0xFF5C5C5E),
+                        fontSize = 12.sp,
+                    )
+                },
                 minLines = 4, maxLines = 8, isError = error != null, supportingText = error?.let {{ Text(it, color = Color(0xFFF87171)) }},
                 textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, color = Color.White),
                 shape = RoundedCornerShape(14.dp),
@@ -113,21 +144,28 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                if (protocol == "WARP") "Paste warp://auto to use Cloudflare WARP with an automatic endpoint."
-                else "Paste your WireGuard config (the [Interface] / [Peer] text) or a wireguard:// link.",
+                when (protocol) {
+                    "WARP" -> "Paste warp://auto to use Cloudflare WARP with an automatic endpoint."
+                    "Shadowsocks" -> "Paste your Shadowsocks link (ss://...) or scan your Outline access key QR code."
+                    else -> "Paste your WireGuard config (the [Interface] / [Peer] text) or a wireguard:// link."
+                },
                 style = MaterialTheme.typography.labelSmall, color = Color(0xFF5C5C5E), lineHeight = 14.sp,
             )
             Spacer(Modifier.height(20.dp))
             GlassPrimaryButton(
                 onClick = {
-                    val flag = if (protocol == "WARP") "🌐" else "⚡"
+                    val flag = when (protocol) {
+                        "WARP" -> "🌐"
+                        "Shadowsocks" -> "🔒"
+                        else -> "⚡"
+                    }
                     viewModel.addProfile(name.trim(), flag, uri.trim())
                     onBack()
                 },
                 enabled = canSave, modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text("Save & Connect", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp) }
             Spacer(Modifier.height(10.dp))
-            Text("This build supports WireGuard configs and Cloudflare WARP only.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4A4A4C), modifier = Modifier.padding(horizontal = 4.dp))
+            Text("This build supports WireGuard, Shadowsocks and Cloudflare WARP.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4A4A4C), modifier = Modifier.padding(horizontal = 4.dp))
         }
     }
 }

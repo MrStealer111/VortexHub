@@ -12,8 +12,16 @@ android {
         applicationId = "com.vpnmobile.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            val testAbis = (project.findProperty("testAbi") as String?)
+                ?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a") + testAbis
+        }
     }
 
     buildTypes {
@@ -70,4 +78,9 @@ dependencies {
     implementation(libs.camera.view)
     implementation(libs.barcode.scanning)
     implementation(libs.billing.ktx)
+    implementation(files("libs/tun2socks.aar"))
+
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core.ktx)
 }

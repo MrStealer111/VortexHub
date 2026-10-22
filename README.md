@@ -25,7 +25,8 @@
 ### 🌐 Protocols
 - **WireGuard** — GoBackend (userspace) ✅
 - **Cloudflare WARP** — auto key generation ✅
-- **VLESS / VMess / Trojan / Shadowsocks** — planned (Xray core integration)
+- **Shadowsocks** — Outline / SIP002 links ✅
+- **VLESS / VMess / Trojan** — not supported
 
 ### ⚡ Performance
 - **WARP Integration** — Cloudflare network
@@ -59,7 +60,7 @@
 |---|---|
 | Language | Kotlin 2.1 |
 | UI | Jetpack Compose (Material 3) |
-| VPN Engine | WireGuard GoBackend + Cloudflare WARP |
+| VPN Engine | WireGuard GoBackend + Shadowsocks (tun2socks) + Cloudflare WARP |
 | Camera | CameraX + MLKit Barcode |
 | Billing | Google Play Billing 7.0 |
 | Persistence | DataStore Preferences |
@@ -82,12 +83,14 @@ app/src/main/java/com/vpnmobile/app/
 │   ├── PingTester.kt            # TCP latency
 │   ├── PremiumManager.kt        # Billing
 │   ├── ServerApi.kt             # Free server fetch
+│   ├── ShadowsocksConfig.kt     # ss:// parser
 │   ├── TunnelProfile.kt         # Server model
 │   ├── TunnelStore.kt           # DataStore prefs
 │   ├── WarpGenerator.kt         # WARP key gen
 │   └── WarpScanner.kt           # CF range scan
 ├── vpn/
 │   ├── VpnConnectionManager.kt  # VPN lifecycle
+│   ├── ShadowsocksVpnService.kt # Shadowsocks tunnel
 │   ├── VpnNotification.kt       # Notifications
 │   └── SecurityCheck.kt         # Root/debug detect
 └── ui/
@@ -108,6 +111,8 @@ app/src/main/java/com/vpnmobile/app/
         ├── PremiumScreen.kt     # Billing
         ├── SplitTunnelScreen.kt # App selection
         └── WarpGenerateScreen.kt# WARP setup
+app/src/androidTest/java/com/vpnmobile/app/
+└── ShadowsocksTunnelTest.kt   # Emulator tunnel smoke test
 ```
 
 ---
@@ -185,6 +190,12 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 2. Generate key pair
 3. Register with Cloudflare
 4. Auto-configures WireGuard
+
+### Shadowsocks Setup
+1. Create an access key in your Outline server or panel
+2. Copy the `ss://...` link (or scan its QR code)
+3. Go to Configs → + → Add manual config → Shadowsocks
+4. Paste the link, save and connect
 
 ### Split Tunneling
 1. Go to Settings → Split Tunnel

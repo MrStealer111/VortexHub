@@ -12,7 +12,7 @@ import com.vpnmobile.app.R
 
 object VpnNotification {
     private const val CHANNEL_ID = "vpn_status"
-    private const val NOTIF_ID = 1001
+    const val NOTIF_ID = 1001
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -28,14 +28,13 @@ object VpnNotification {
         }
     }
 
-    fun show(context: Context, profileName: String, rx: Long, tx: Long, isConnected: Boolean) {
+    fun build(context: Context, profileName: String, rx: Long, tx: Long, isConnected: Boolean): android.app.Notification {
         ensureChannel(context)
-        val mgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
         val pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val title = if (isConnected) "VPN Connected • $profileName" else "VPN Connecting..."
         val text = if (isConnected) "↓ ${format(rx)}  ↑ ${format(tx)}  • Tap to manage" else "Establishing secure tunnel..."
-        val notif = NotificationCompat.Builder(context, CHANNEL_ID)
+        return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(text)
@@ -44,7 +43,11 @@ object VpnNotification {
             .setContentIntent(pi)
             .setCategory(androidx.core.app.NotificationCompat.CATEGORY_SERVICE)
             .build()
-        mgr.notify(NOTIF_ID, notif)
+    }
+
+    fun show(context: Context, profileName: String, rx: Long, tx: Long, isConnected: Boolean) {
+        val mgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        mgr.notify(NOTIF_ID, build(context, profileName, rx, tx, isConnected))
     }
 
     fun cancel(context: Context) {
