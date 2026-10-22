@@ -185,6 +185,16 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 2. Rebuild and install
 3. Or set a custom server JSON URL in Profile → Free Server URL (fetched on refresh)
 
+### Shadowsocks Engine
+`app/libs/tun2socks.aar` is built from [outline-go-tun2socks](https://github.com/OutlineFoundation/outline-go-tun2socks) (Apache-2.0) with Go 1.24.5, gomobile `v0.0.0-20230906132913-2077a3224571`, and Android NDK 27.2. It bundles `libgojni.so` for `arm64-v8a` and `armeabi-v7a`. To regenerate:
+
+```bash
+gomobile bind -target=android -androidapi 24 \
+  -ldflags="-extldflags=-Wl,-z,max-page-size=16384" \
+  -o app/libs/tun2socks.aar \
+  ./outline/tun2socks ./outline/shadowsocks
+```
+
 ### WARP Setup
 1. Go to Configs → WARP
 2. Generate key pair
@@ -204,6 +214,12 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 4. Selected apps bypass VPN
 
 ---
+
+## 🙏 Third-party
+
+- [WireGuard for Android](https://git.zx2c4.com/wireguard-android/) — tunnel backend
+- [Outline tun2socks](https://github.com/OutlineFoundation/outline-go-tun2socks) — Shadowsocks engine (Apache-2.0)
+- [go-tun2socks](https://github.com/eycorsican/go-tun2socks) — TUN stack
 
 ## 🛡️ Security Features
 
