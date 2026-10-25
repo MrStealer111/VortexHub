@@ -52,7 +52,7 @@
 
 ### 🎨 UI/UX
 - **Dark Theme** — #0A0A0A background
-- **Orange Accent** — #FF8C00 brand color
+- **Accent Themes** — Selectable Orange / Green / Blue brand colors
 - **Glass Buttons** — Frosted glass effect
 - **3D Tilt Cards** — Interactive animations
 - **Particles** — Connected state animation
