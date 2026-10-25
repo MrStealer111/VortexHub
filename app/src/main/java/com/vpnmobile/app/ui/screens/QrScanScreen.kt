@@ -27,7 +27,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -70,21 +71,21 @@ fun QrScanScreen(viewModel: MainViewModel, onBack: () -> Unit, onScanned: (Strin
     LaunchedEffect(Unit) { if (!hasCamPermission) launcher.launch(Manifest.permission.CAMERA) }
 
     Scaffold(
-        containerColor = Color(0xFF0A0A0A),
+        containerColor = AppTheme.colors.bg,
         topBar = {
             TopAppBar(
-                title = { Text("Scan QR", color = Color.White, fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A)),
+                title = { Text("Scan QR", color = AppTheme.colors.text, fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = AppTheme.colors.text) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppTheme.colors.bg),
             )
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding).background(Color(0xFF0A0A0A)), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize().padding(padding).background(AppTheme.colors.bg), contentAlignment = Alignment.Center) {
             if (!hasCamPermission) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-                    Text("Camera permission required", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Camera permission required", color = AppTheme.colors.text, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
-                    Text("Tap to grant camera access", color = Color(0xFF8E8E93), fontSize = 12.sp)
+                    Text("Tap to grant camera access", color = AppTheme.colors.textSecondary, fontSize = 12.sp)
                 }
             } else {
                 Box(Modifier.fillMaxSize()) {
@@ -125,10 +126,10 @@ fun QrScanScreen(viewModel: MainViewModel, onBack: () -> Unit, onScanned: (Strin
                         modifier = Modifier.fillMaxSize(),
                     )
                     Box(
-                        Modifier.size(220.dp).align(Alignment.Center).clip(RoundedCornerShape(16.dp)).border(2.dp, Color(0xFFFF8C00), RoundedCornerShape(16.dp)).background(Color.Transparent)
+                        Modifier.size(220.dp).align(Alignment.Center).clip(RoundedCornerShape(16.dp)).border(2.dp, AppTheme.colors.accent, RoundedCornerShape(16.dp)).background(Color.Transparent)
                     )
                     Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).background(Color.Black.copy(0.6f)).padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text(lastScanned?.take(40) ?: "Point camera at QR code", color = Color.White, fontSize = 12.sp, maxLines = 1)
+                        Text(lastScanned?.take(40) ?: "Point camera at QR code", color = AppTheme.colors.text, fontSize = 12.sp, maxLines = 1)
                     }
                 }
             }

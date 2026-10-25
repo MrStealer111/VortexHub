@@ -45,7 +45,8 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -93,42 +94,42 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val ports = listOf(500, 1701, 2408, 4500)
 
     Scaffold(
-        containerColor = Color(0xFF0A0A0A),
+        containerColor = AppTheme.colors.bg,
         topBar = {
             TopAppBar(
-                title = { Text("WARP Auto", fontWeight = FontWeight.Bold, color = Color.White) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A)),
+                title = { Text("WARP Auto", fontWeight = FontWeight.Bold, color = AppTheme.colors.text) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = AppTheme.colors.text) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppTheme.colors.bg),
             )
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Color(0xFF1C1C1E), Color(0xFF2A2520)))).padding(18.dp)
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(AppTheme.colors.surface, AppTheme.colors.surfaceVariant))).padding(18.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(48.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Cyan, Color(0xFFFF6B00)))), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.AutoAwesome, null, Modifier.size(22.dp), Color.White)
+                    Box(Modifier.size(48.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Cyan, AppTheme.colors.accent))), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Filled.AutoAwesome, null, Modifier.size(22.dp), AppTheme.colors.text)
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("Cloudflare WARP", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                        Text("Key မထည့်ပဲ Auto WireGuard config", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))
+                        Text("Cloudflare WARP", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AppTheme.colors.text)
+                        Text("Key မထည့်ပဲ Auto WireGuard config", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary)
                     }
                 }
             }
 
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C1E)), border = BorderStroke(1.dp, Color(0xFF2C2C2E))) {
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface), border = BorderStroke(1.dp, AppTheme.colors.surfaceVariant)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Endpoint", style = MaterialTheme.typography.labelMedium, color = Color(0xFF8E8E93), fontWeight = FontWeight.SemiBold)
+                    Text("Endpoint", style = MaterialTheme.typography.labelMedium, color = AppTheme.colors.textSecondary, fontWeight = FontWeight.SemiBold)
                     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-                        OutlinedTextField(value = selectedIp, onValueChange = {}, readOnly = true, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF3A3A3C), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                        OutlinedTextField(value = selectedIp, onValueChange = {}, readOnly = true, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = AppTheme.colors.border, focusedTextColor = AppTheme.colors.text, unfocusedTextColor = AppTheme.colors.text))
                         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             ips.forEach { ip -> DropdownMenuItem(text = { Text(ip) }, onClick = { selectedIp = ip; expanded = false }) }
                         }
                     }
                     ExposedDropdownMenuBox(expanded = portExpanded, onExpandedChange = { portExpanded = !portExpanded }) {
-                        OutlinedTextField(value = selectedPort.toString(), onValueChange = {}, readOnly = true, label = { Text("Port", color = Color(0xFF8E8E93)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(portExpanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF3A3A3C), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                        OutlinedTextField(value = selectedPort.toString(), onValueChange = {}, readOnly = true, label = { Text("Port", color = AppTheme.colors.textSecondary) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(portExpanded) }, modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = AppTheme.colors.border, focusedTextColor = AppTheme.colors.text, unfocusedTextColor = AppTheme.colors.text))
                         ExposedDropdownMenu(expanded = portExpanded, onDismissRequest = { portExpanded = false }) {
                             ports.forEach { p -> DropdownMenuItem(text = { Text(p.toString()) }, onClick = { selectedPort = p; portExpanded = false }) }
                         }
@@ -162,7 +163,7 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             }
 
             error?.let {
-                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF2A1A1E)), border = BorderStroke(1.dp, Color(0xFFF87171).copy(0.3f))) {
+                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF2A1A1E)), border = BorderStroke(1.dp, AppTheme.colors.error.copy(0.3f))) {
                     Text(it, Modifier.padding(14.dp), color = Color(0xFFFECACA), style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -174,30 +175,30 @@ fun WarpGenerateScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             Icon(Icons.Filled.CheckCircle, null, Modifier.size(18.dp), Success)
                             Text("Generated!", color = Success, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.weight(1f))
-                            Text(r.endpoint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))
+                            Text(r.endpoint, style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary)
                         }
-                        Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF0A0A0A)).padding(12.dp)) {
+                        Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(AppTheme.colors.bg).padding(12.dp)) {
                             Text(r.config, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp), color = Color(0xFFFFFFFF))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { clipboard.setText(AnnotatedString(r.config)) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2E))) {
-                                Icon(Icons.Filled.ContentCopy, null, Modifier.size(14.dp), Color.White)
+                            Button(onClick = { clipboard.setText(AnnotatedString(r.config)) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.surfaceVariant)) {
+                                Icon(Icons.Filled.ContentCopy, null, Modifier.size(14.dp), AppTheme.colors.text)
                                 Spacer(Modifier.width(6.dp))
-                                Text("Copy", color = Color.White)
+                                Text("Copy", color = AppTheme.colors.text)
                             }
                             Button(onClick = {
                                 viewModel.addProfile("WARP ${r.endpoint}", "🌐", r.config)
                                 onBack()
                             }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Success)) {
-                                Text("Save & Connect", color = Color.White, fontWeight = FontWeight.Bold)
+                                Text("Save & Connect", color = AppTheme.colors.text, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
             }
 
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C1E)), border = BorderStroke(1.dp, Color(0xFF2C2C2E))) {
-                Text("Cloudflare WARP API (api.cloudflareclient.com) ကို အသုံးပြုပြီး Auto register လုပ်ကာ WireGuard config ထုတ်ပေးတာပါ။ Key ကို device ထဲမှာပဲ generate လုပ်ပါတယ်။", Modifier.padding(14.dp), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93), lineHeight = 16.sp)
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface), border = BorderStroke(1.dp, AppTheme.colors.surfaceVariant)) {
+                Text("Cloudflare WARP API (api.cloudflareclient.com) ကို အသုံးပြုပြီး Auto register လုပ်ကာ WireGuard config ထုတ်ပေးတာပါ။ Key ကို device ထဲမှာပဲ generate လုပ်ပါတယ်။", Modifier.padding(14.dp), style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary, lineHeight = 16.sp)
             }
         }
     }

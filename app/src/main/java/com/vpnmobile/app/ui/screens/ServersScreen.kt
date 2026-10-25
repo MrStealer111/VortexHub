@@ -3,6 +3,7 @@ package com.vpnmobile.app.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,9 +29,11 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
@@ -41,11 +45,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -75,11 +83,16 @@ import com.vpnmobile.app.vpn.VpnState
 import kotlinx.coroutines.launch
 import java.net.URL
 
-private val BgBlack = Color(0xFF0A0A0A)
-private val CardBg = Color(0xFF1E1E1E)
-private val Orange = Color(0xFFFF8C00)
-private val Gray = Color(0xFF8E8E93)
-private val Border = Color(0xFF2C2C2E)
+private val BgBlack: Color
+    @Composable get() = AppTheme.colors.bg
+private val CardBg: Color
+    @Composable get() = AppTheme.colors.surface
+private val Orange: Color
+    @Composable get() = AppTheme.colors.accent
+private val Gray: Color
+    @Composable get() = AppTheme.colors.textSecondary
+private val Border: Color
+    @Composable get() = AppTheme.colors.border
 
 data class FreeServer(val name: String, val flag: String, val ms: Int, val country: String)
 
@@ -104,8 +117,11 @@ fun ServersScreen(
     val subscriptions by viewModel.subscriptions.collectAsStateWithLifecycle()
     val subscriptionRefreshing by viewModel.subscriptionRefreshing.collectAsStateWithLifecycle()
     val findingFastest by viewModel.findingFastest.collectAsStateWithLifecycle()
+    val hideKeys by viewModel.hideKeys.collectAsStateWithLifecycle()
     var tab by remember { mutableStateOf("Free") }
     var sortByPing by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    var countryFilter by remember { mutableStateOf<String?>(null) }
 
     var showPlusMenu by remember { mutableStateOf(false) }
     var showManualSub by remember { mutableStateOf(false) }
@@ -128,54 +144,54 @@ fun ServersScreen(
 
     Column(Modifier.fillMaxSize().background(BgBlack)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Configs", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Configs", color = AppTheme.colors.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { profiles.forEach { viewModel.deleteProfile(it) } }, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.Delete, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
+                IconButton(onClick = { profiles.forEach { viewModel.deleteProfile(it) } }, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.Delete, null, tint = AppTheme.colors.text, modifier = Modifier.size(20.dp)) }
                 Box {
-                    Box(Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f)).clickable { showPlusMenu = true }, contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, null, Modifier.size(20.dp), Color.White) }
-                    DropdownMenu(expanded = showPlusMenu, onDismissRequest = { showPlusMenu = false; showManualSub = false }, modifier = Modifier.background(Color(0xFF1E1E1E))) {
-                        DropdownMenuItem(text = { Text("Import from Clipboard", color = Color.White, fontSize = 13.sp) }, onClick = {
+                    Box(Modifier.size(36.dp).clip(CircleShape).background(AppTheme.colors.text.copy(alpha = 0.08f)).clickable { showPlusMenu = true }, contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, null, Modifier.size(20.dp), AppTheme.colors.text) }
+                    DropdownMenu(expanded = showPlusMenu, onDismissRequest = { showPlusMenu = false; showManualSub = false }, modifier = Modifier.background(AppTheme.colors.surface)) {
+                        DropdownMenuItem(text = { Text("Import from Clipboard", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = {
                             showPlusMenu = false
                             val txt = clipboard.getText()?.text ?: ""
                             if (txt.isNotBlank()) viewModel.addProfile("Imported", "🌐", txt)
                         })
-                        HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Text("Import url from Clipboard", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; val t = clipboard.getText()?.text ?: ""; if (t.isNotBlank()) viewModel.addProfile("URL Import", "🌐", t) })
-                        HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Text("Add subscription URL", color = Color.White, fontSize = 13.sp) }, onClick = {
+                        HorizontalDivider(color = AppTheme.colors.surfaceVariant)
+                        DropdownMenuItem(text = { Text("Import url from Clipboard", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; val t = clipboard.getText()?.text ?: ""; if (t.isNotBlank()) viewModel.addProfile("URL Import", "🌐", t) })
+                        HorizontalDivider(color = AppTheme.colors.surfaceVariant)
+                        DropdownMenuItem(text = { Text("Add subscription URL", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = {
                             showPlusMenu = false
                             val clip = clipboard.getText()?.text?.trim().orEmpty()
                             subUrl = if (clip.startsWith("https://")) clip else ""
                             subName = ""
                             showAddSub = true
                         })
-                        HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Text("Scan config from QR Code", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; (onQrScan ?: onImport).invoke() })
-                        HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Text("Update Subs", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; viewModel.refreshSubscriptions(); refreshTick++ })
-                        HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = Color.White, fontSize = 13.sp); Icon(if (showManualSub) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, Modifier.size(16.dp), Color.White) } }, onClick = { showManualSub = !showManualSub })
+                        HorizontalDivider(color = AppTheme.colors.surfaceVariant)
+                        DropdownMenuItem(text = { Text("Scan config from QR Code", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; (onQrScan ?: onImport).invoke() })
+                        HorizontalDivider(color = AppTheme.colors.surfaceVariant)
+                        DropdownMenuItem(text = { Text("Update Subs", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; viewModel.refreshSubscriptions(); refreshTick++ })
+                        HorizontalDivider(color = AppTheme.colors.surfaceVariant)
+                        DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = AppTheme.colors.text, fontSize = 13.sp); Icon(if (showManualSub) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, Modifier.size(16.dp), AppTheme.colors.text) } }, onClick = { showManualSub = !showManualSub })
                         if (showManualSub) {
-                            HorizontalDivider(color = Color(0xFF2C2C2E))
+                            HorizontalDivider(color = AppTheme.colors.surfaceVariant)
                             listOf("wireguard", "warp", "shadowsocks").forEach { p ->
-                                DropdownMenuItem(text = { Text("Add manual $p", color = Color.White, fontSize = 12.sp) }, onClick = { showPlusMenu = false; showManualSub = false; onImport() })
+                                DropdownMenuItem(text = { Text("Add manual $p", color = AppTheme.colors.text, fontSize = 12.sp) }, onClick = { showPlusMenu = false; showManualSub = false; onImport() })
                             }
                         }
                     }
                 }
-                IconButton(onClick = { (onQrScan ?: onImport).invoke() }, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.QrCodeScanner, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
+                IconButton(onClick = { (onQrScan ?: onImport).invoke() }, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.QrCodeScanner, null, tint = AppTheme.colors.text, modifier = Modifier.size(20.dp)) }
             }
         }
         Row(
-            Modifier.padding(horizontal = 14.dp).fillMaxWidth().clip(RoundedCornerShape(50)).background(Color(0xFF1E1E1E)).padding(4.dp),
+            Modifier.padding(horizontal = 14.dp).fillMaxWidth().clip(RoundedCornerShape(50)).background(AppTheme.colors.surface).padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Box(
-                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Free") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Free" }.padding(vertical = 10.dp),
+                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Free") AppTheme.colors.accent.copy(alpha = 0.16f) else Color.Transparent).clickable { tab = "Free" }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) { Text("Free", color = if (tab == "Free") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
             Box(
-                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Favorites") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Favorites" }.padding(vertical = 10.dp),
+                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Favorites") AppTheme.colors.accent.copy(alpha = 0.16f) else Color.Transparent).clickable { tab = "Favorites" }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) { Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.Star, null, Modifier.size(14.dp), if (tab == "Favorites") Orange else Gray)
@@ -183,15 +199,73 @@ fun ServersScreen(
                     Text("Favorites", color = if (tab == "Favorites") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 } }
             Box(
-                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Personal") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Personal" }.padding(vertical = 10.dp),
+                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Personal") AppTheme.colors.accent.copy(alpha = 0.16f) else Color.Transparent).clickable { tab = "Personal" }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) { Text("Personal", color = if (tab == "Personal") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
             Box(
-                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Subs") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Subs" }.padding(vertical = 10.dp),
+                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Subs") AppTheme.colors.accent.copy(alpha = 0.16f) else Color.Transparent).clickable { tab = "Subs" }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) { Text("Subs", color = if (tab == "Subs") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier.padding(horizontal = 14.dp).fillMaxWidth(),
+            placeholder = { Text("Search servers...", color = Gray, fontSize = 12.sp) },
+            leadingIcon = { Icon(Icons.Rounded.Search, null, Modifier.size(18.dp), Gray) },
+            trailingIcon = if (query.isNotEmpty()) {
+                { IconButton(onClick = { query = "" }, modifier = Modifier.size(32.dp)) { Icon(Icons.Rounded.Close, null, Modifier.size(16.dp), Gray) } }
+            } else null,
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Orange,
+                unfocusedBorderColor = Border,
+                focusedTextColor = AppTheme.colors.text,
+                unfocusedTextColor = AppTheme.colors.text,
+                cursorColor = Orange,
+                focusedContainerColor = CardBg,
+                unfocusedContainerColor = CardBg,
+            ),
+        )
+        val flagOptions = remember(profiles, apiFree) {
+            (profiles.map { it.flag } + apiFree.map { it.flag })
+                .filter { it.isNotBlank() && it != "\uD83C\uDF10" }
+                .distinct()
+                .take(10)
+        }
+        if (flagOptions.isNotEmpty()) {
+            Row(
+                Modifier.padding(horizontal = 14.dp).horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FilterChip(
+                    selected = countryFilter == null,
+                    onClick = { countryFilter = null },
+                    label = { Text("All", fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Orange.copy(alpha = 0.18f),
+                        selectedLabelColor = Orange,
+                        labelColor = Gray,
+                    ),
+                )
+                flagOptions.forEach { flag ->
+                    FilterChip(
+                        selected = countryFilter == flag,
+                        onClick = { countryFilter = if (countryFilter == flag) null else flag },
+                        label = { Text(flag, fontSize = 14.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Orange.copy(alpha = 0.18f),
+                            selectedLabelColor = Orange,
+                            labelColor = Gray,
+                        ),
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
         Row(Modifier.padding(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Card(
                 onClick = {
@@ -212,7 +286,7 @@ fun ServersScreen(
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
             ) {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Rounded.Timer, null, Modifier.size(14.dp), Gray); Text(if (freeLoading) "Checking..." else "Check Pings", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Icon(Icons.Rounded.Timer, null, Modifier.size(14.dp), Gray); Text(if (freeLoading) "Checking..." else "Check Pings", color = AppTheme.colors.text, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
             }
             Card(
@@ -220,7 +294,7 @@ fun ServersScreen(
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
             ) {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Rounded.SwapVert, null, Modifier.size(14.dp), Gray); Text(if (sortByPing) "Sort: Ping" else "Sort: Time", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Icon(Icons.Rounded.SwapVert, null, Modifier.size(14.dp), Gray); Text(if (sortByPing) "Sort: Ping" else "Sort: Time", color = AppTheme.colors.text, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     Spacer(Modifier.weight(1f)); Icon(Icons.Rounded.ExpandMore, null, Modifier.size(16.dp), Gray)
                 }
             }
@@ -228,13 +302,16 @@ fun ServersScreen(
         Spacer(Modifier.height(10.dp))
         if (tab == "Free") {
             LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                val list = if (sortByPing) apiFree.sortedBy { freePings[it.name + it.uri] ?: 9999 } else apiFree
+                val list = apiFree
+                    .filter { query.isBlank() || it.name.contains(query, true) || it.flag.contains(query, true) }
+                    .filter { countryFilter == null || it.flag == countryFilter }
+                    .let { if (sortByPing) it.sortedBy { s -> freePings[s.name + s.uri] ?: 9999 } else it }
                 if (list.isEmpty()) {
                     item { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { Text("Loading free servers...", color = Gray) } }
                 }
                 items(list, key = { it.name + it.uri }) { s ->
                     val ms = freePings[s.name + s.uri] ?: freeServers.find { it.name == s.name }?.ms ?: 0
-                    val color = when { ms == 0 || ms >= 9999 -> Gray; ms < 500 -> Color(0xFF00C853); ms < 650 -> Color(0xFFFFEB3B); else -> Color(0xFFFF5252) }
+                    val color = when { ms == 0 || ms >= 9999 -> Gray; ms < 500 -> AppTheme.colors.success; ms < 650 -> Color(0xFFFFEB3B); else -> AppTheme.colors.error }
                     val displayMs = when { ms == 0 -> "Tap Check"; ms >= 9999 -> "Failed"; else -> "$ms ms" }
                     val isFreeSelected = freeSelected?.name == s.name && freeSelected?.configText == s.uri
                     val isFreeConnected = isFreeSelected && status.state == VpnState.CONNECTED
@@ -243,16 +320,16 @@ fun ServersScreen(
                             val p = TunnelProfile(id = "free-${s.name}", name = s.name, flag = s.flag, configText = s.uri, createdAt = System.currentTimeMillis())
                             viewModel.connectFree(p)
                         },
-                        shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isFreeSelected) Color(0xFF2A2520) else CardBg), border = BorderStroke(1.dp, if (isFreeSelected) Orange.copy(alpha = 0.4f) else Border)
+                        shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isFreeSelected) AppTheme.colors.surfaceVariant else CardBg), border = BorderStroke(1.dp, if (isFreeSelected) Orange.copy(alpha = 0.4f) else Border)
                     ) {
                         Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0xFF2C2C2E)), contentAlignment = Alignment.Center) { ProfileAvatar(s.flag, contentSize = 18.dp) }
+                            Box(Modifier.size(36.dp).clip(CircleShape).background(AppTheme.colors.surfaceVariant), contentAlignment = Alignment.Center) { ProfileAvatar(s.flag, contentSize = 18.dp) }
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(s.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                Text(s.name, color = AppTheme.colors.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                                 Text("${com.vpnmobile.app.data.ConfigTools.protocolLabel(s.uri)} · $displayMs", color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                             }
-                            if (isFreeConnected) Box(Modifier.size(20.dp).clip(CircleShape).background(Color(0xFF00C853).copy(0.15f)), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Check, null, Modifier.size(12.dp), Color(0xFF00C853)) }
+                            if (isFreeConnected) Box(Modifier.size(20.dp).clip(CircleShape).background(AppTheme.colors.success.copy(0.15f)), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Check, null, Modifier.size(12.dp), AppTheme.colors.success) }
                             else if (freeLoading) androidx.compose.material3.CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = Orange) else Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp), Gray)
                         }
                     }
@@ -261,6 +338,8 @@ fun ServersScreen(
         } else if (tab == "Favorites") {
             val favProfiles = profiles
                 .filter { it.id in favorites }
+                .filter { query.isBlank() || it.name.contains(query, true) || it.flag.contains(query, true) }
+                .filter { countryFilter == null || it.flag == countryFilter }
                 .let { list ->
                     if (sortByPing) list.sortedBy { pingResults[it.id]?.takeIf { r -> r.success }?.ms ?: Int.MAX_VALUE }
                     else list.sortedByDescending { it.createdAt }
@@ -278,18 +357,18 @@ fun ServersScreen(
                     items(favProfiles, key = { it.id }) { p ->
                         val ping = pingResults[p.id]
                         val pingText = when { ping == null -> "Tap ping"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
-                        val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> Color(0xFF00C853); else -> Color(0xFFFFAB00) }
+                        val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> AppTheme.colors.success; else -> Color(0xFFFFAB00) }
                         val proto = com.vpnmobile.app.data.ConfigTools.protocolLabel(p.configText)
                         val isSelected = p.id == selected?.id
                         Card(
                             onClick = { viewModel.selectProfile(p); onConnect(p) },
-                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF2A2520) else CardBg), border = BorderStroke(1.dp, if (isSelected) Orange.copy(alpha = 0.4f) else Border)
+                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isSelected) AppTheme.colors.surfaceVariant else CardBg), border = BorderStroke(1.dp, if (isSelected) Orange.copy(alpha = 0.4f) else Border)
                         ) {
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 ProfileAvatar(p.flag, contentSize = 18.dp)
                                 Spacer(Modifier.width(8.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(p.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(p.name, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Text(proto, color = Gray, fontSize = 11.sp)
                                         Text(pingText, color = pingColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
@@ -340,7 +419,7 @@ fun ServersScreen(
                             }
                         }
                     }
-                    items(subscriptions, key = { it.id }) { sub ->
+                    items(subscriptions.filter { query.isBlank() || it.name.contains(query, true) || it.url.contains(query, true) }, key = { it.id }) { sub ->
                         val count = profiles.count { it.subscriptionId == sub.id }
                         val isRefreshing = sub.id in subscriptionRefreshing
                         Card(
@@ -348,9 +427,9 @@ fun ServersScreen(
                         ) {
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
-                                    Text(sub.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(sub.name, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                                     Text("$count configs · ${updatedLabel(sub.lastUpdated)}", color = Gray, fontSize = 11.sp)
-                                    Text(subscriptionHost(sub.url), color = Color(0xFF5C5C5E), fontSize = 10.sp, maxLines = 1)
+                                    Text(subscriptionHost(sub.url), color = AppTheme.colors.textSecondary.copy(alpha = 0.7f), fontSize = 10.sp, maxLines = 1)
                                 }
                                 if (isRefreshing) {
                                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange)
@@ -373,10 +452,13 @@ fun ServersScreen(
                     }
                 }
             } else {
+                val filteredProfiles = profiles
+                    .filter { query.isBlank() || it.name.contains(query, true) || it.flag.contains(query, true) }
+                    .filter { countryFilter == null || it.flag == countryFilter }
                 val sortedProfiles = if (sortByPing) {
-                    profiles.sortedBy { pingResults[it.id]?.takeIf { r -> r.success }?.ms ?: Int.MAX_VALUE }
+                    filteredProfiles.sortedBy { pingResults[it.id]?.takeIf { r -> r.success }?.ms ?: Int.MAX_VALUE }
                 } else {
-                    profiles.sortedByDescending { it.createdAt }
+                    filteredProfiles.sortedByDescending { it.createdAt }
                 }
                 LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     item {
@@ -386,13 +468,13 @@ fun ServersScreen(
                                     viewModel.findFastest { best -> if (best != null) onConnect(best) }
                                 }
                             },
-                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2014)), border = BorderStroke(1.dp, Orange.copy(alpha = 0.35f))
+                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surfaceVariant), border = BorderStroke(1.dp, Orange.copy(alpha = 0.35f))
                         ) {
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(34.dp).clip(CircleShape).background(Orange.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Bolt, null, Modifier.size(18.dp), Orange) }
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text("Fastest server", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("Fastest server", color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                                     Text(if (findingFastest) "Testing latency..." else "Ping all and connect to the best", color = Gray, fontSize = 11.sp)
                                 }
                                 if (findingFastest) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange) else Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(18.dp), Orange)
@@ -402,19 +484,19 @@ fun ServersScreen(
                     items(sortedProfiles, key = { it.id }) { p ->
                         val ping = pingResults[p.id]
                         val pingText = when { ping == null -> "Tap ping"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
-                        val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> Color(0xFF00C853); else -> Color(0xFFFFAB00) }
+                        val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> AppTheme.colors.success; else -> Color(0xFFFFAB00) }
                         val proto = com.vpnmobile.app.data.ConfigTools.protocolLabel(p.configText)
                         val isSelected = p.id == selected?.id
                         val isFav = p.id in favorites
                         Card(
                             onClick = { viewModel.selectProfile(p); onConnect(p) },
-                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF2A2520) else CardBg), border = BorderStroke(1.dp, if (isSelected) Orange.copy(alpha = 0.4f) else Border)
+                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isSelected) AppTheme.colors.surfaceVariant else CardBg), border = BorderStroke(1.dp, if (isSelected) Orange.copy(alpha = 0.4f) else Border)
                         ) {
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 ProfileAvatar(p.flag, contentSize = 18.dp)
                                 Spacer(Modifier.width(8.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(p.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                    Text(p.name, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Text(proto, color = Gray, fontSize = 11.sp)
                                         Text(pingText, color = pingColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
@@ -435,14 +517,14 @@ fun ServersScreen(
     }
 
     qrProfile?.let { profile ->
-        QrShareDialog(profile = profile, onDismiss = { qrProfile = null })
+        QrShareDialog(profile = profile, onDismiss = { qrProfile = null }, hideKeys = hideKeys)
     }
 
     if (showAddSub) {
         AlertDialog(
             onDismissRequest = { showAddSub = false },
-            containerColor = Color(0xFF1C1C1E),
-            title = { Text("Add subscription", color = Color.White, fontWeight = FontWeight.Bold) },
+            containerColor = AppTheme.colors.surface,
+            title = { Text("Add subscription", color = AppTheme.colors.text, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     OutlinedTextField(

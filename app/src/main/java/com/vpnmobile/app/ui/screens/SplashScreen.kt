@@ -14,7 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,8 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-private val BgBlack = Color(0xFF0A0A0A)
-private val Orange = Color(0xFFFF8C00)
+private val BgBlack: Color
+    @Composable get() = AppTheme.colors.bg
+private val Orange: Color
+    @Composable get() = AppTheme.colors.accent
 
 @Composable
 fun SplashScreen(onSplashComplete: () -> Unit) {
@@ -71,12 +74,12 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
                     .size(120.dp)
                     .scale(scale)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Orange, Color(0xFFFF6B00)))),
+                    .background(Brush.linearGradient(listOf(Orange, AppTheme.colors.accent))),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     "V",
-                    color = Color.White,
+                    color = AppTheme.colors.text,
                     fontSize = 64.sp,
                     fontWeight = FontWeight.Black,
                     modifier = Modifier.size(120.dp)
@@ -87,7 +90,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
 
             Text(
                 "Vortex",
-                color = Color.White,
+                color = AppTheme.colors.text,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Black
             )
@@ -102,7 +105,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
 
             Text(
                 "Secure VPN",
-                color = Color(0xFF8E8E93).copy(alpha = alpha),
+                color = AppTheme.colors.textSecondary.copy(alpha = alpha),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -111,7 +114,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
 
             Text(
                 "v1.0.0",
-                color = Color(0xFF8E8E93).copy(alpha = 0.6f),
+                color = AppTheme.colors.textSecondary.copy(alpha = 0.6f),
                 fontSize = 12.sp
             )
         }

@@ -40,7 +40,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -103,26 +104,26 @@ fun SplitTunnelScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     }
 
     Scaffold(
-        containerColor = Color(0xFF0A0A0A),
+        containerColor = AppTheme.colors.bg,
         topBar = {
             TopAppBar(
-                title = { Text("Split Tunnel", fontWeight = FontWeight.Bold, color = Color.White) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A)),
+                title = { Text("Split Tunnel", fontWeight = FontWeight.Bold, color = AppTheme.colors.text) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = AppTheme.colors.text) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppTheme.colors.bg),
             )
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Card(
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C1E)), border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface), border = BorderStroke(1.dp, AppTheme.colors.surfaceVariant),
             ) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Split Tunnel", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White)
-                        Text(if (splitEnabled) "Enabled • ${excludedApps.size} apps" else "Route all apps through VPN", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))
+                        Text("Split Tunnel", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = AppTheme.colors.text)
+                        Text(if (splitEnabled) "Enabled • ${excludedApps.size} apps" else "Route all apps through VPN", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary)
                     }
-                    Switch(checked = splitEnabled, onCheckedChange = viewModel::setSplitEnabled, colors = SwitchDefaults.colors(checkedTrackColor = Cyan, checkedThumbColor = Color.White))
+                    Switch(checked = splitEnabled, onCheckedChange = viewModel::setSplitEnabled, colors = SwitchDefaults.colors(checkedTrackColor = Cyan, checkedThumbColor = AppTheme.colors.text))
                 }
                 if (splitEnabled) {
                     Row(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -139,15 +140,15 @@ fun SplitTunnelScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             if (splitEnabled) {
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
-                    value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search apps...", color = Color(0xFF5C5C5E)) },
-                    leadingIcon = { Icon(Icons.Filled.Search, null, tint = Color(0xFF8E8E93)) },
+                    value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Search apps...", color = AppTheme.colors.textSecondary.copy(alpha = 0.7f)) },
+                    leadingIcon = { Icon(Icons.Filled.Search, null, tint = AppTheme.colors.textSecondary) },
                     singleLine = true, shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF2C2C2E), focusedTextColor = Color.White, unfocusedTextColor = Color.White, cursorColor = Cyan, focusedContainerColor = Color(0xFF1C1C1E), unfocusedContainerColor = Color(0xFF1C1C1E)),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = AppTheme.colors.surfaceVariant, focusedTextColor = AppTheme.colors.text, unfocusedTextColor = AppTheme.colors.text, cursorColor = Cyan, focusedContainerColor = AppTheme.colors.surface, unfocusedContainerColor = AppTheme.colors.surface),
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${filtered.size} apps", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93), modifier = Modifier.weight(1f))
-                    Text("Show system", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))
+                    Text("${filtered.size} apps", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+                    Text("Show system", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary)
                     Spacer(Modifier.width(6.dp))
                     Switch(checked = showSystem, onCheckedChange = { showSystem = it }, modifier = Modifier.size(width = 44.dp, height = 26.dp))
                 }
@@ -158,15 +159,15 @@ fun SplitTunnelScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         val selected = app.packageName in excludedApps
                         Card(
                             onClick = { scope.launch { viewModel.toggleSplitApp(app.packageName) } },
-                            shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = if (selected) Color(0xFF2A2520) else Color(0xFF1C1C1E)),
-                            border = if (selected) BorderStroke(1.dp, Cyan.copy(0.4f)) else BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                            shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = if (selected) AppTheme.colors.surfaceVariant else AppTheme.colors.surface),
+                            border = if (selected) BorderStroke(1.dp, Cyan.copy(0.4f)) else BorderStroke(1.dp, AppTheme.colors.surfaceVariant),
                         ) {
                             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 AppIcon(packageName = app.packageName)
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(app.label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1)
-                                    Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = Color(0xFF5C5C5E), maxLines = 1)
+                                    Text(app.label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = AppTheme.colors.text, maxLines = 1)
+                                    Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary.copy(alpha = 0.7f), maxLines = 1)
                                 }
                                 Checkbox(checked = selected, onCheckedChange = { scope.launch { viewModel.toggleSplitApp(app.packageName) } }, colors = CheckboxDefaults.colors(checkedColor = Cyan, uncheckedColor = Color(0xFF4A4A4C)))
                             }
@@ -175,12 +176,12 @@ fun SplitTunnelScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
             } else {
                 Spacer(Modifier.height(24.dp))
-                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF1C1C1E)).padding(24.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(AppTheme.colors.surface).padding(24.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF2C2C2E)), contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Rounded.CallSplit, null, Modifier.size(24.dp), Cyan) }
+                        Box(Modifier.size(48.dp).clip(CircleShape).background(AppTheme.colors.surfaceVariant), contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Rounded.CallSplit, null, Modifier.size(24.dp), Cyan) }
                         Spacer(Modifier.height(12.dp))
-                        Text("Split tunneling disabled", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                        Text("All app traffic goes through VPN", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))
+                        Text("Split tunneling disabled", style = MaterialTheme.typography.titleSmall, color = AppTheme.colors.text, fontWeight = FontWeight.Bold)
+                        Text("All app traffic goes through VPN", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary)
                     }
                 }
             }
@@ -195,7 +196,7 @@ private fun AppIcon(packageName: String) {
         try { context.packageManager.getApplicationIcon(packageName).toBitmap(48, 48).asImageBitmap() } catch (_: Exception) { null }
     }
     if (bitmap != null) androidx.compose.foundation.Image(bitmap = bitmap, contentDescription = null, modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)))
-    else Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF2C2C2E)), contentAlignment = Alignment.Center) { Text(packageName.take(1).uppercase(), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+    else Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(AppTheme.colors.surfaceVariant), contentAlignment = Alignment.Center) { Text(packageName.take(1).uppercase(), color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
 }
 
 private fun ApplicationInfo.isSystemApp(): Boolean = (flags and ApplicationInfo.FLAG_SYSTEM) != 0

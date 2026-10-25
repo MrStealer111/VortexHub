@@ -8,6 +8,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import com.vpnmobile.app.MainActivity
 import com.vpnmobile.app.R
 import com.vpnmobile.app.VpnApplication
 import com.vpnmobile.app.vpn.VpnState
@@ -60,6 +61,14 @@ class VpnWidgetProvider : AppWidgetProvider() {
                 context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             views.setOnClickPendingIntent(R.id.widget_button, pending)
+            val openIntent = Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            val openPending = PendingIntent.getActivity(
+                context, 1, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            views.setOnClickPendingIntent(R.id.widget_title, openPending)
+            views.setOnClickPendingIntent(R.id.widget_status, openPending)
             manager.updateAppWidget(id, views)
         }
     }

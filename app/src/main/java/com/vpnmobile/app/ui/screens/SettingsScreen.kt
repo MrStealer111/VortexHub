@@ -22,12 +22,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.biometric.BiometricManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vpnmobile.app.BuildConfig
 import com.vpnmobile.app.ui.MainViewModel
@@ -52,15 +56,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val BgBlack = Color(0xFF0A0A0A)
-private val CardBg = Color(0xFF1E1E1E)
-private val Orange = Color(0xFFFF8C00)
-private val Gray = Color(0xFF8E8E93)
+private val BgBlack: Color
+    @Composable get() = AppTheme.colors.bg
+private val CardBg: Color
+    @Composable get() = AppTheme.colors.surface
+private val Orange: Color
+    @Composable get() = AppTheme.colors.accent
+private val Gray: Color
+    @Composable get() = AppTheme.colors.textSecondary
 
 @Composable
 fun SettingsScreen(
     viewModel: MainViewModel,
     onBack: () -> Unit,
+    onOpenSplitTunnel: () -> Unit = {},
 ) {
     val autoConnect by viewModel.autoConnect.collectAsStateWithLifecycle()
     val killSwitch by viewModel.killSwitch.collectAsStateWithLifecycle()
@@ -68,9 +77,18 @@ fun SettingsScreen(
     val splitEnabled by viewModel.splitEnabled.collectAsStateWithLifecycle()
     val blockIpv6 by viewModel.blockIpv6.collectAsStateWithLifecycle()
     val customDns by viewModel.customDns.collectAsStateWithLifecycle()
+    val biometricLock by viewModel.biometricLock.collectAsStateWithLifecycle()
+    val secureScreen by viewModel.secureScreen.collectAsStateWithLifecycle()
+    val hideKeys by viewModel.hideKeys.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showDnsCheck by remember { mutableStateOf(false) }
+    val biometricAvailable = remember {
+        BiometricManager.from(context).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+            BiometricManager.BIOMETRIC_SUCCESS
+    }
 
     fun openSystem(action: String) {
         try {
@@ -96,10 +114,51 @@ fun SettingsScreen(
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", Modifier.size(22.dp), Orange)
             }
             Spacer(Modifier.width(12.dp))
-            Text("Settings", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Settings", color = AppTheme.colors.text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(Modifier.height(8.dp))
+
+        // Appearance
+        SectionHeader("Appearance")
+
+        Row(
+            Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf("system" to "System", "dark" to "Dark", "light" to "Light").forEach { (value, label) ->
+                FilterChip(
+                    selected = themeMode == value,
+                    onClick = { viewModel.setThemeMode(value) },
+                    label = { Text(label, fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Orange.copy(alpha = 0.18f),
+                        selectedLabelColor = Orange,
+                        labelColor = Gray,
+                    ),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf("system" to "System", "en" to "English", "my" to "မြန်မာ").forEach { (value, label) ->
+                FilterChip(
+                    selected = language == value,
+                    onClick = { viewModel.setLanguage(value) },
+                    label = { Text(label, fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Orange.copy(alpha = 0.18f),
+                        selectedLabelColor = Orange,
+                        labelColor = Gray,
+                    ),
+                )
+            }
+        }
+
+        DividerLine()
 
         // VPN Settings
         SectionHeader("VPN Settings")
@@ -156,6 +215,13 @@ fun SettingsScreen(
             onCheckedChange = { viewModel.setSplitEnabled(it) }
         )
 
+        SettingsActionRow(
+            title = "Split Tunnel apps",
+            subtitle = "Choose apps to include or exclude",
+            action = "Manage",
+            onClick = onOpenSplitTunnel
+        )
+
         DividerLine()
 
         SettingsToggleRow(
@@ -179,7 +245,7 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             Column {
-                Text("Custom DNS", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text("Custom DNS", color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(4.dp))
                 Text(customDns, color = Gray, fontSize = 12.sp)
             }
@@ -204,6 +270,42 @@ fun SettingsScreen(
             subtitle = "Show public IP and the DNS resolver in use",
             action = "Run",
             onClick = { showDnsCheck = true }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // Security
+        SectionHeader("Security")
+
+        SettingsToggleRow(
+            title = "App lock",
+            subtitle = if (biometricAvailable) "Require biometrics to open VortexHub" else "Biometric unlock is not available on this device",
+            checked = biometricLock,
+            onCheckedChange = {
+                if (it && !biometricAvailable) {
+                    Toast.makeText(context, "Set up a fingerprint or face unlock first", Toast.LENGTH_SHORT).show()
+                } else {
+                    viewModel.setBiometricLock(it)
+                }
+            }
+        )
+
+        DividerLine()
+
+        SettingsToggleRow(
+            title = "Block screenshots",
+            subtitle = "Hide app content in screenshots and Recents",
+            checked = secureScreen,
+            onCheckedChange = { viewModel.setSecureScreen(it) }
+        )
+
+        DividerLine()
+
+        SettingsToggleRow(
+            title = "Hide keys by default",
+            subtitle = "Mask configs and QR codes until you reveal them",
+            checked = hideKeys,
+            onCheckedChange = { viewModel.setHideKeys(it) }
         )
 
         Spacer(Modifier.height(16.dp))
@@ -241,7 +343,7 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             Column {
-                Text("VortexHub VPN", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text("VortexHub VPN", color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(4.dp))
                 Text("Version ${BuildConfig.VERSION_NAME}", color = Gray, fontSize = 12.sp)
                 Spacer(Modifier.height(8.dp))
@@ -287,17 +389,17 @@ private fun SettingsToggleRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(title, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(subtitle, color = Gray, fontSize = 12.sp)
         }
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
+                checkedThumbColor = AppTheme.colors.text,
                 checkedTrackColor = Orange,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color(0xFF3A3A3C),
+                uncheckedThumbColor = AppTheme.colors.text,
+                uncheckedTrackColor = AppTheme.colors.border,
                 uncheckedBorderColor = Color.Transparent
             )
         )
@@ -319,7 +421,7 @@ private fun SettingsActionRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(title, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(subtitle, color = Gray, fontSize = 12.sp)
         }
         Text(action, color = Orange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -329,6 +431,6 @@ private fun SettingsActionRow(
 @Composable
 private fun DividerLine() {
     Spacer(Modifier.height(10.dp))
-    Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2C)))
+    Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(1.dp).background(AppTheme.colors.border))
     Spacer(Modifier.height(10.dp))
 }

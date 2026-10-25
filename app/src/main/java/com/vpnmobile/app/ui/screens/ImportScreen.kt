@@ -29,7 +29,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -69,19 +70,19 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
     val canSave = name.isNotBlank() && uri.isNotBlank() && validate(uri) == null
 
     Scaffold(
-        containerColor = Color(0xFF0A0A0A),
+        containerColor = AppTheme.colors.bg,
         topBar = {
             TopAppBar(
-                title = { Text("Add Server", fontWeight = FontWeight.Bold, color = Color.White) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A)),
+                title = { Text("Add Server", fontWeight = FontWeight.Bold, color = AppTheme.colors.text) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = AppTheme.colors.text) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppTheme.colors.bg),
             )
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp)) {
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C1E)), border = BorderStroke(1.dp, Color(0xFF2C2C2E))) {
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface), border = BorderStroke(1.dp, AppTheme.colors.surfaceVariant)) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Protocol", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93), fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
+                    Text("Protocol", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
                         listOf("WireGuard", "WARP", "Shadowsocks").forEach { p ->
@@ -89,8 +90,8 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                                 selected = protocol == p, onClick = { protocol = p; error = validate(uri) },
                                 label = { Text(p, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                                 leadingIcon = if (protocol == p) {{ Icon(Icons.Filled.Check, null, Modifier.size(14.dp)) }} else null,
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Color(0xFFFF8C00), selectedLabelColor = Color(0xFFFFFFFF), containerColor = Color(0xFF2C2C2E), labelColor = Color(0xFF8E8E93)),
-                                border = BorderStroke(1.dp, if (protocol == p) Color(0xFFFF8C00) else Color(0xFF3A3A3C)),
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = AppTheme.colors.accent, selectedLabelColor = Color(0xFFFFFFFF), containerColor = AppTheme.colors.surfaceVariant, labelColor = AppTheme.colors.textSecondary),
+                                border = BorderStroke(1.dp, if (protocol == p) AppTheme.colors.accent else AppTheme.colors.border),
                             )
                         }
                     }
@@ -99,7 +100,7 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
             Spacer(Modifier.height(14.dp))
             OutlinedTextField(
                 value = name, onValueChange = { name = it }, modifier = Modifier.fillMaxWidth(),
-                label = { Text("Name", color = Color(0xFF8E8E93)) },
+                label = { Text("Name", color = AppTheme.colors.textSecondary) },
                 placeholder = {
                     Text(
                         when (protocol) {
@@ -107,11 +108,11 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                             "WARP" -> "e.g. WARP"
                             else -> "e.g. My WireGuard"
                         },
-                        color = Color(0xFF5C5C5E),
+                        color = AppTheme.colors.textSecondary.copy(alpha = 0.7f),
                     )
                 },
                 singleLine = true, shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFFFF8C00), unfocusedBorderColor = Color(0xFF3A3A3C), focusedTextColor = Color.White, unfocusedTextColor = Color.White, cursorColor = Color(0xFFFF8C00), focusedContainerColor = Color(0xFF1C1C1E), unfocusedContainerColor = Color(0xFF1C1C1E)),
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = AppTheme.colors.accent, unfocusedBorderColor = AppTheme.colors.border, focusedTextColor = AppTheme.colors.text, unfocusedTextColor = AppTheme.colors.text, cursorColor = AppTheme.colors.accent, focusedContainerColor = AppTheme.colors.surface, unfocusedContainerColor = AppTheme.colors.surface),
             )
             Spacer(Modifier.height(14.dp))
             OutlinedTextField(
@@ -123,7 +124,7 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                             "Shadowsocks" -> "Shadowsocks Link"
                             else -> "WireGuard Config"
                         },
-                        color = Color(0xFF8E8E93),
+                        color = AppTheme.colors.textSecondary,
                     )
                 },
                 placeholder = {
@@ -133,14 +134,14 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                             "Shadowsocks" -> "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwYXNzd29yZA@host:port/?outline=1"
                             else -> "[Interface]\nPrivateKey = ...\nAddress = ...\n[Peer]\nPublicKey = ...\nEndpoint = host:port"
                         },
-                        color = Color(0xFF5C5C5E),
+                        color = AppTheme.colors.textSecondary.copy(alpha = 0.7f),
                         fontSize = 12.sp,
                     )
                 },
-                minLines = 4, maxLines = 8, isError = error != null, supportingText = error?.let {{ Text(it, color = Color(0xFFF87171)) }},
-                textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, color = Color.White),
+                minLines = 4, maxLines = 8, isError = error != null, supportingText = error?.let {{ Text(it, color = AppTheme.colors.error) }},
+                textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, color = AppTheme.colors.text),
                 shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFFFF8C00), unfocusedBorderColor = Color(0xFF3A3A3C), focusedContainerColor = Color(0xFF1C1C1E), unfocusedContainerColor = Color(0xFF1C1C1E)),
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = AppTheme.colors.accent, unfocusedBorderColor = AppTheme.colors.border, focusedContainerColor = AppTheme.colors.surface, unfocusedContainerColor = AppTheme.colors.surface),
             )
             Spacer(Modifier.height(8.dp))
             Text(
@@ -149,7 +150,7 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                     "Shadowsocks" -> "Paste your Shadowsocks link (ss://...) or scan your Outline access key QR code."
                     else -> "Paste your WireGuard config (the [Interface] / [Peer] text) or a wireguard:// link."
                 },
-                style = MaterialTheme.typography.labelSmall, color = Color(0xFF5C5C5E), lineHeight = 14.sp,
+                style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary.copy(alpha = 0.7f), lineHeight = 14.sp,
             )
             Spacer(Modifier.height(20.dp))
             GlassPrimaryButton(
@@ -163,7 +164,7 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                     onBack()
                 },
                 enabled = canSave, modifier = Modifier.fillMaxWidth().height(52.dp),
-            ) { Text("Save & Connect", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp) }
+            ) { Text("Save & Connect", color = AppTheme.colors.text, fontWeight = FontWeight.Black, fontSize = 15.sp) }
             Spacer(Modifier.height(10.dp))
             Text("This build supports WireGuard, Shadowsocks and Cloudflare WARP.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4A4A4C), modifier = Modifier.padding(horizontal = 4.dp))
         }

@@ -24,11 +24,28 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val storePath = System.getenv("VORTEXHUB_KEYSTORE")
+            if (!storePath.isNullOrBlank()) {
+                storeFile = file(storePath)
+                storePassword = System.getenv("VORTEXHUB_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("VORTEXHUB_KEY_ALIAS")
+                keyPassword = System.getenv("VORTEXHUB_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
+            signingConfig = if (!System.getenv("VORTEXHUB_KEYSTORE").isNullOrBlank()) {
+                signingConfigs.getByName("release")
+            } else {
+                null
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -79,6 +96,7 @@ dependencies {
     implementation(libs.barcode.scanning)
     implementation(libs.billing.ktx)
     implementation(libs.zxing.core)
+    implementation(libs.androidx.biometric)
     implementation(files("libs/tun2socks.aar"))
 
     testImplementation("junit:junit:4.13.2")

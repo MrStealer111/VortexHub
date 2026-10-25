@@ -11,7 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,17 +44,17 @@ fun DnsCheckDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Column(
             Modifier
-                .background(Color(0xFF1C1C1E), RoundedCornerShape(20.dp))
+                .background(AppTheme.colors.surface, RoundedCornerShape(20.dp))
                 .padding(20.dp)
                 .fillMaxWidth(),
         ) {
-            Text("Connection & DNS check", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Connection & DNS check", color = AppTheme.colors.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
             if (running) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Color(0xFFFF8C00))
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = AppTheme.colors.accent)
                     Spacer(Modifier.width(10.dp))
-                    Text("Checking...", color = Color(0xFF8E8E93), fontSize = 12.sp)
+                    Text("Checking...", color = AppTheme.colors.textSecondary, fontSize = 12.sp)
                 }
             } else {
                 val r = result
@@ -64,11 +65,11 @@ fun DnsCheckDialog(onDismiss: () -> Unit) {
                 Text(
                     "Resolver shows the DNS server this device currently uses. " +
                         "For encrypted DNS, enable Private DNS in system settings.",
-                    color = Color(0xFF5C5C5E), fontSize = 11.sp,
+                    color = AppTheme.colors.textSecondary.copy(alpha = 0.7f), fontSize = 11.sp,
                 )
             }
             Spacer(Modifier.height(10.dp))
-            TextButton(onClick = onDismiss) { Text("Close", color = Color(0xFFFF8C00)) }
+            TextButton(onClick = onDismiss) { Text("Close", color = AppTheme.colors.accent) }
         }
     }
 }
@@ -76,7 +77,7 @@ fun DnsCheckDialog(onDismiss: () -> Unit) {
 @Composable
 private fun ResultRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text(label, color = Color(0xFF8E8E93), fontSize = 12.sp, modifier = Modifier.width(130.dp))
-        Text(value, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        Text(label, color = AppTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.width(130.dp))
+        Text(value, color = AppTheme.colors.text, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }

@@ -22,10 +22,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import com.vpnmobile.app.ui.i18n.Burmese
+import com.vpnmobile.app.ui.i18n.LocalLanguage
+import com.vpnmobile.app.ui.i18n.Text
+import com.vpnmobile.app.ui.theme.AppTheme
+import com.vpnmobile.app.ui.i18n.resolveLanguage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -89,21 +94,24 @@ fun VpnApp(
     val currentRoute = backStackEntry?.destination?.route
     val snackbarHostState = remember { SnackbarHostState() }
     var showSplash by remember { mutableStateOf(true) }
+    val languageSetting by viewModel.language.collectAsStateWithLifecycle()
+    val language = resolveLanguage(languageSetting)
 
     LaunchedEffect(Unit) {
         viewModel.messages.collect { message ->
-            snackbarHostState.showSnackbar(message)
+            snackbarHostState.showSnackbar(if (language == "my") Burmese.translate(message) else message)
         }
     }
     LaunchedEffect(Unit) {
         viewModel.needPremium.collect { navController.navigate(Routes.PREMIUM) }
     }
 
+    CompositionLocalProvider(LocalLanguage provides language) {
     if (showSplash) {
         SplashScreen(onSplashComplete = { showSplash = false })
     } else {
         Scaffold(
-            containerColor = Color(0xFF0A0A0A),
+            containerColor = AppTheme.colors.bg,
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (currentRoute == Routes.HOME || currentRoute == Routes.SERVERS || currentRoute == Routes.SETTINGS) {
@@ -172,7 +180,8 @@ fun VpnApp(
             ) {
                     SettingsScreen(
                         viewModel = viewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onOpenSplitTunnel = { navController.navigate(Routes.SPLIT_TUNNEL) },
                     )
                 }
                 composable(
@@ -206,6 +215,7 @@ fun VpnApp(
             }
         }
     }
+    }
 }
 
 private fun NavHostController.navigateTo(route: String) {
@@ -219,11 +229,11 @@ private fun NavHostController.navigateTo(route: String) {
 @Composable
 private fun PillBottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
     Box(
-        modifier = Modifier.fillMaxWidth().background(Color(0xFF0A0A0A)).padding(horizontal = 20.dp, vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().background(AppTheme.colors.bg).padding(horizontal = 20.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(
-            modifier = Modifier.clip(RoundedCornerShape(50)).background(Color(0xFF1E1E1E)).padding(horizontal = 6.dp, vertical = 6.dp),
+            modifier = Modifier.clip(RoundedCornerShape(50)).background(AppTheme.colors.surface).padding(horizontal = 6.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
             PillNavItem(icon = Icons.Filled.Home, label = "Home", selected = currentRoute == Routes.HOME, onClick = { onNavigate(Routes.HOME) })
@@ -236,8 +246,8 @@ private fun PillBottomBar(currentRoute: String?, onNavigate: (String) -> Unit) {
 @Composable
 private fun PillNavItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit, showArrow: Boolean = false) {
     val scale by animateFloatAsState(if (selected) 1f else 0.92f, spring(dampingRatio = 0.6f, stiffness = 400f), label = "pillScale")
-    val bg = if (selected) Brush.linearGradient(listOf(Color(0xFFFF8C00), Color(0xFFFF6B00))) else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
-    val contentColor = if (selected) Color.White else Color(0xFF8E8E93)
+    val bg = if (selected) Brush.linearGradient(listOf(AppTheme.colors.accent, AppTheme.colors.accent)) else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+    val contentColor = if (selected) AppTheme.colors.text else AppTheme.colors.textSecondary
     Box(
         modifier = Modifier.clip(RoundedCornerShape(50)).background(bg).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick).padding(horizontal = if (selected) 18.dp else 14.dp, vertical = 10.dp).scale(scale),
         contentAlignment = Alignment.Center,

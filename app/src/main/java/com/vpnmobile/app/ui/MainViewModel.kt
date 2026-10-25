@@ -70,6 +70,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val blockIpv6: StateFlow<Boolean> =
         store.blockIpv6.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    val biometricLock: StateFlow<Boolean> =
+        store.biometricLock.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val secureScreen: StateFlow<Boolean> =
+        store.secureScreen.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val hideKeys: StateFlow<Boolean> =
+        store.hideKeys.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val themeMode: StateFlow<String> =
+        store.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
+
+    val language: StateFlow<String> =
+        store.language.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
+
     val favorites: StateFlow<Set<String>> =
         store.favorites.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
@@ -266,6 +281,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setBlockIpv6(enabled: Boolean) {
         viewModelScope.launch { store.setBlockIpv6(enabled) }
+    }
+
+    fun setBiometricLock(enabled: Boolean) {
+        viewModelScope.launch { store.setBiometricLock(enabled) }
+    }
+
+    fun setSecureScreen(enabled: Boolean) {
+        viewModelScope.launch { store.setSecureScreen(enabled) }
+    }
+
+    fun setHideKeys(enabled: Boolean) {
+        viewModelScope.launch { store.setHideKeys(enabled) }
+    }
+
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch { store.setThemeMode(mode) }
+    }
+
+    fun setLanguage(language: String) {
+        viewModelScope.launch { store.setLanguage(language) }
     }
 
     fun setSplitEnabled(enabled: Boolean) {

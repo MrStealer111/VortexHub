@@ -107,6 +107,9 @@ object ConfigTools {
         return String.format(Locale.US, "%.1f %s", value, units[unit])
     }
 
+    fun formatSpeed(bytesPerSecond: Long): String =
+        if (bytesPerSecond <= 0L) "0 B/s" else "${formatBytes(bytesPerSecond)}/s"
+
     fun formatDuration(millis: Long): String {
         val totalSeconds = (millis / 1000).coerceAtLeast(0)
         val hours = totalSeconds / 3600

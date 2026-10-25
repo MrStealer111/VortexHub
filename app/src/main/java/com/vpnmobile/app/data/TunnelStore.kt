@@ -32,6 +32,11 @@ class TunnelStore(private val context: Context) {
         val DATA_USAGE = stringPreferencesKey("data_usage")
         val SUBSCRIPTIONS = stringPreferencesKey("subscriptions_json")
         val BLOCK_IPV6 = booleanPreferencesKey("block_ipv6")
+        val BIOMETRIC_LOCK = booleanPreferencesKey("biometric_lock")
+        val SECURE_SCREEN = booleanPreferencesKey("secure_screen")
+        val HIDE_KEYS = booleanPreferencesKey("hide_keys")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val LANGUAGE = stringPreferencesKey("language")
     }
 
     val profiles: Flow<List<TunnelProfile>> = context.dataStore.data
@@ -87,6 +92,21 @@ class TunnelStore(private val context: Context) {
 
     val blockIpv6: Flow<Boolean> = context.dataStore.data
         .map { prefs -> prefs[Keys.BLOCK_IPV6] ?: true }
+
+    val biometricLock: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[Keys.BIOMETRIC_LOCK] ?: false }
+
+    val secureScreen: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[Keys.SECURE_SCREEN] ?: false }
+
+    val hideKeys: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[Keys.HIDE_KEYS] ?: true }
+
+    val themeMode: Flow<String> = context.dataStore.data
+        .map { prefs -> prefs[Keys.THEME_MODE] ?: "system" }
+
+    val language: Flow<String> = context.dataStore.data
+        .map { prefs -> prefs[Keys.LANGUAGE] ?: "system" }
 
     suspend fun addProfile(
         name: String,
@@ -162,6 +182,26 @@ class TunnelStore(private val context: Context) {
 
     suspend fun setBlockIpv6(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[Keys.BLOCK_IPV6] = enabled }
+    }
+
+    suspend fun setBiometricLock(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.BIOMETRIC_LOCK] = enabled }
+    }
+
+    suspend fun setSecureScreen(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.SECURE_SCREEN] = enabled }
+    }
+
+    suspend fun setHideKeys(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.HIDE_KEYS] = enabled }
+    }
+
+    suspend fun setThemeMode(mode: String) {
+        context.dataStore.edit { prefs -> prefs[Keys.THEME_MODE] = mode }
+    }
+
+    suspend fun setLanguage(language: String) {
+        context.dataStore.edit { prefs -> prefs[Keys.LANGUAGE] = language }
     }
 
     suspend fun setAutoReconnect(enabled: Boolean) {
