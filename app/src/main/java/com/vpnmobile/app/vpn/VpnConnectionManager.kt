@@ -8,6 +8,8 @@ import com.vpnmobile.app.data.ConfigTools
 import com.vpnmobile.app.data.PremiumManager
 import com.vpnmobile.app.data.ShadowsocksUri
 import com.vpnmobile.app.data.TunnelProfile
+import com.vpnmobile.app.util.Diagnostics
+import com.vpnmobile.app.widget.VpnWidgetProvider
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Statistics
 import com.wireguard.android.backend.Tunnel
@@ -21,7 +23,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -29,7 +33,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.net.InetAddress
 
-enum class VpnState { DISCONNECTED, CONNECTING, CONNECTED }
+enum class VpnState { DISCONNECTED, CONNECTING, CONNECTED, BLOCKED }
 
 data class VpnStatus(
     val state: VpnState = VpnState.DISCONNECTED,
@@ -53,6 +57,14 @@ class VpnConnectionManager(private val context: Context) {
     private var activeEngine = Engine.NONE
 
     private enum class Engine { NONE, WIREGUARD, SHADOWSOCKS }
+
+    init {
+        scope.launch {
+            _status.map { it.state }.distinctUntilChanged().collect { state ->
+                VpnWidgetProvider.updateAll(appContext, state)
+            }
+        }
+    }
 
     private val tunnel = object : Tunnel {
         override fun getName(): String = TUNNEL_NAME
@@ -104,6 +116,7 @@ class VpnConnectionManager(private val context: Context) {
     suspend fun connect(
         profile: TunnelProfile,
         killSwitch: Boolean,
+        blockIpv6: Boolean = true,
         splitEnabled: Boolean = false,
         splitMode: String = "exclude",
         excludedApps: Set<String> = emptySet(),
@@ -124,9 +137,10 @@ class VpnConnectionManager(private val context: Context) {
 
         try {
             when {
-                isAutoWarp(configText) -> connectViaWarp(profile, splitEnabled, splitMode, excludedApps)
-                ShadowsocksUri.isShadowsocks(configText) -> connectViaShadowsocks(profile, splitEnabled, splitMode, excludedApps)
-                else -> connectViaWireGuard(profile, killSwitch, splitEnabled, splitMode, excludedApps)
+                isAutoWarp(configText) -> connectViaWarp(profile, blockIpv6, splitEnabled, splitMode, excludedApps)
+                ShadowsocksUri.isShadowsocks(configText) ->
+                    connectViaShadowsocks(profile, killSwitch, blockIpv6, splitEnabled, splitMode, excludedApps)
+                else -> connectViaWireGuard(profile, killSwitch, blockIpv6, splitEnabled, splitMode, excludedApps)
             }
         } catch (e: Exception) {
             stopStatsPolling()
@@ -143,6 +157,7 @@ class VpnConnectionManager(private val context: Context) {
 
     private suspend fun connectViaWarp(
         profile: TunnelProfile,
+        blockIpv6: Boolean,
         splitEnabled: Boolean,
         splitMode: String,
         excludedApps: Set<String>,
@@ -156,8 +171,9 @@ class VpnConnectionManager(private val context: Context) {
 
         Log.d(TAG, "WARP endpoint: ${warpResult.endpoint}, address: ${warpResult.address}")
 
+        val warpText = if (blockIpv6) ConfigTools.applyIpv6Block(warpResult.config) else warpResult.config
         val warpConfig = withContext(Dispatchers.IO) {
-            Config.parse(warpResult.config.byteInputStream(Charsets.UTF_8))
+            Config.parse(warpText.byteInputStream(Charsets.UTF_8))
         }
         val finalConfig = applySplitTunnel(warpConfig, splitEnabled, splitMode, excludedApps)
 
@@ -180,11 +196,14 @@ class VpnConnectionManager(private val context: Context) {
     private suspend fun connectViaWireGuard(
         profile: TunnelProfile,
         killSwitch: Boolean,
+        blockIpv6: Boolean,
         splitEnabled: Boolean,
         splitMode: String,
         excludedApps: Set<String>,
     ) {
-        val configText = if (killSwitch) ConfigTools.applyKillSwitch(profile.configText) else profile.configText
+        var configText = profile.configText
+        if (blockIpv6) configText = ConfigTools.applyIpv6Block(configText)
+        if (killSwitch) configText = ConfigTools.applyKillSwitch(configText)
         val baseConfig = withContext(Dispatchers.IO) {
             Config.parse(configText.byteInputStream(Charsets.UTF_8))
         }
@@ -203,6 +222,8 @@ class VpnConnectionManager(private val context: Context) {
 
     private suspend fun connectViaShadowsocks(
         profile: TunnelProfile,
+        killSwitch: Boolean,
+        blockIpv6: Boolean,
         splitEnabled: Boolean,
         splitMode: String,
         excludedApps: Set<String>,
@@ -215,26 +236,41 @@ class VpnConnectionManager(private val context: Context) {
             ?: throw Exception("Invalid Shadowsocks link — expected ss://method:password@host:port")
 
         Log.d(TAG, "Connecting Shadowsocks to ${config.host}:${config.port}")
+        Diagnostics.log(TAG, "Connecting Shadowsocks to ${config.host}:${config.port} (killSwitch=$killSwitch)")
         ShadowsocksRuntime.reset()
-        ShadowsocksVpnService.start(appContext, profile.name, config, splitEnabled, splitMode, excludedApps)
+        ShadowsocksVpnService.start(
+            appContext, profile.name, config, splitEnabled, splitMode, excludedApps, killSwitch, blockIpv6,
+        )
 
         val result = withTimeoutOrNull(25_000) {
             ShadowsocksRuntime.state.first {
-                it == VpnState.CONNECTED || (it == VpnState.DISCONNECTED && ShadowsocksRuntime.lastError != null)
+                it == VpnState.CONNECTED || it == VpnState.BLOCKED ||
+                    (it == VpnState.DISCONNECTED && ShadowsocksRuntime.lastError != null)
             }
         }
-        if (result != VpnState.CONNECTED) {
-            ShadowsocksVpnService.stop(appContext)
-            throw Exception(ShadowsocksRuntime.lastError ?: "Shadowsocks connection timed out")
+        if (result == VpnState.CONNECTED) {
+            activeEngine = Engine.SHADOWSOCKS
+            _status.update {
+                it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
+            }
+            VpnNotification.show(appContext, profile.name, 0, 0, true)
+            startShadowsocksStatsPolling(profile.name)
+            Log.d(TAG, "Shadowsocks tunnel connected")
+            return
         }
-
-        activeEngine = Engine.SHADOWSOCKS
-        _status.update {
-            it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
+        if (result == VpnState.BLOCKED || (killSwitch && result == null)) {
+            activeEngine = Engine.SHADOWSOCKS
+            ShadowsocksRuntime.setBlocked()
+            _status.update {
+                it.copy(state = VpnState.BLOCKED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
+            }
+            VpnNotification.show(appContext, profile.name, 0, 0, false, blocked = true)
+            startShadowsocksStatsPolling(profile.name)
+            Diagnostics.log(TAG, "Shadowsocks blocked by kill switch")
+            return
         }
-        VpnNotification.show(appContext, profile.name, 0, 0, true)
-        startShadowsocksStatsPolling(profile.name)
-        Log.d(TAG, "Shadowsocks tunnel connected")
+        ShadowsocksVpnService.stop(appContext)
+        throw Exception(ShadowsocksRuntime.lastError ?: "Shadowsocks connection timed out")
     }
 
     private fun applySplitTunnel(
@@ -311,15 +347,23 @@ class VpnConnectionManager(private val context: Context) {
         val baseTx = TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 } ?: 0L
         statsJob = scope.launch {
             while (isActive) {
-                if (ShadowsocksRuntime.state.value != VpnState.CONNECTED) {
-                    VpnNotification.cancel(appContext)
-                    _status.value = VpnStatus()
-                    break
+                when (ShadowsocksRuntime.state.value) {
+                    VpnState.CONNECTED -> {
+                        val rx = (TrafficStats.getUidRxBytes(uid).takeIf { it >= 0 }?.minus(baseRx) ?: 0L).coerceAtLeast(0L)
+                        val tx = (TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 }?.minus(baseTx) ?: 0L).coerceAtLeast(0L)
+                        _status.update { it.copy(rxBytes = rx, txBytes = tx) }
+                        VpnNotification.show(appContext, profileName, rx, tx, true)
+                    }
+                    VpnState.BLOCKED -> {
+                        _status.update { it.copy(state = VpnState.BLOCKED) }
+                        VpnNotification.show(appContext, profileName, 0, 0, false, blocked = true)
+                    }
+                    else -> {
+                        VpnNotification.cancel(appContext)
+                        _status.value = VpnStatus()
+                        break
+                    }
                 }
-                val rx = (TrafficStats.getUidRxBytes(uid).takeIf { it >= 0 }?.minus(baseRx) ?: 0L).coerceAtLeast(0L)
-                val tx = (TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 }?.minus(baseTx) ?: 0L).coerceAtLeast(0L)
-                _status.update { it.copy(rxBytes = rx, txBytes = tx) }
-                VpnNotification.show(appContext, profileName, rx, tx, true)
                 delay(2_000)
             }
         }

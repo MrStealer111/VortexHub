@@ -12,8 +12,8 @@ android {
         applicationId = "com.vpnmobile.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 5
+        versionName = "1.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -78,8 +78,10 @@ dependencies {
     implementation(libs.camera.view)
     implementation(libs.barcode.scanning)
     implementation(libs.billing.ktx)
+    implementation(libs.zxing.core)
     implementation(files("libs/tun2socks.aar"))
 
+    testImplementation("junit:junit:4.13.2")
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.core.ktx)

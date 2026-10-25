@@ -1,5 +1,9 @@
 package com.vpnmobile.app.ui.screens
 
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,15 +26,27 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vpnmobile.app.BuildConfig
 import com.vpnmobile.app.ui.MainViewModel
+import com.vpnmobile.app.ui.components.DnsCheckDialog
+import com.vpnmobile.app.util.Diagnostics
+import com.vpnmobile.app.util.ShareUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val BgBlack = Color(0xFF0A0A0A)
 private val CardBg = Color(0xFF1E1E1E)
@@ -46,7 +62,19 @@ fun SettingsScreen(
     val killSwitch by viewModel.killSwitch.collectAsStateWithLifecycle()
     val autoReconnect by viewModel.autoReconnect.collectAsStateWithLifecycle()
     val splitEnabled by viewModel.splitEnabled.collectAsStateWithLifecycle()
+    val blockIpv6 by viewModel.blockIpv6.collectAsStateWithLifecycle()
     val customDns by viewModel.customDns.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showDnsCheck by remember { mutableStateOf(false) }
+
+    fun openSystem(action: String) {
+        try {
+            context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) {
+            Toast.makeText(context, "Settings screen not available", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Column(
         Modifier
@@ -90,9 +118,27 @@ fun SettingsScreen(
 
         SettingsToggleRow(
             title = "Kill Switch",
-            subtitle = "Block internet when VPN disconnects",
+            subtitle = "Block internet if the tunnel drops",
             checked = killSwitch,
             onCheckedChange = { viewModel.setKillSwitch(it) }
+        )
+
+        DividerLine()
+
+        SettingsActionRow(
+            title = "Always-on VPN",
+            subtitle = "Enable Always-on + Block connections without VPN",
+            action = "Open",
+            onClick = { openSystem(Settings.ACTION_VPN_SETTINGS) }
+        )
+
+        DividerLine()
+
+        SettingsActionRow(
+            title = "Battery optimization",
+            subtitle = "Allow the VPN to stay connected in background",
+            action = "Open",
+            onClick = { openSystem(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS) }
         )
 
         DividerLine()
@@ -102,6 +148,15 @@ fun SettingsScreen(
             subtitle = "Route only selected apps through VPN",
             checked = splitEnabled,
             onCheckedChange = { viewModel.setSplitEnabled(it) }
+        )
+
+        DividerLine()
+
+        SettingsToggleRow(
+            title = "Block IPv6",
+            subtitle = "Route IPv6 into the tunnel to prevent leaks",
+            checked = blockIpv6,
+            onCheckedChange = { viewModel.setBlockIpv6(it) }
         )
 
         Spacer(Modifier.height(16.dp))
@@ -124,6 +179,48 @@ fun SettingsScreen(
             }
         }
 
+        Spacer(Modifier.height(8.dp))
+
+        SettingsActionRow(
+            title = "Private DNS (DoH)",
+            subtitle = "Encrypt DNS system-wide (e.g. one.one.one.one)",
+            action = "Open",
+            onClick = {
+                if (Build.VERSION.SDK_INT >= 28) openSystem("android.settings.PRIVATE_DNS_SETTINGS")
+                else openSystem(Settings.ACTION_WIRELESS_SETTINGS)
+            }
+        )
+
+        DividerLine()
+
+        SettingsActionRow(
+            title = "Connection & DNS check",
+            subtitle = "Show public IP and the DNS resolver in use",
+            action = "Run",
+            onClick = { showDnsCheck = true }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // Diagnostics
+        SectionHeader("Diagnostics")
+
+        SettingsActionRow(
+            title = "Export diagnostics",
+            subtitle = "Redacted connection log for troubleshooting",
+            action = "Export",
+            onClick = {
+                scope.launch {
+                    try {
+                        val file = withContext(Dispatchers.IO) { Diagnostics.export(context) }
+                        ShareUtils.shareFile(context, file, "text/plain", "VortexHub diagnostics")
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        )
+
         Spacer(Modifier.height(16.dp))
 
         // About
@@ -140,19 +237,22 @@ fun SettingsScreen(
             Column {
                 Text("VortexHub VPN", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(4.dp))
-                Text("Version 1.0.0", color = Gray, fontSize = 12.sp)
+                Text("Version ${BuildConfig.VERSION_NAME}", color = Gray, fontSize = 12.sp)
                 Spacer(Modifier.height(8.dp))
                 Text("Features:", color = Orange, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                Text("• WireGuard / Cloudflare WARP support", color = Gray, fontSize = 11.sp)
-                Text("• WARP auto-configuration", color = Gray, fontSize = 11.sp)
-                Text("• Split tunneling", color = Gray, fontSize = 11.sp)
-                Text("• Kill switch", color = Gray, fontSize = 11.sp)
-                Text("• Auto-reconnect", color = Gray, fontSize = 11.sp)
-                Text("• Server favorites", color = Gray, fontSize = 11.sp)
+                Text("• WireGuard / Shadowsocks / WARP", color = Gray, fontSize = 11.sp)
+                Text("• Subscriptions, QR export, fastest server", color = Gray, fontSize = 11.sp)
+                Text("• Split tunneling + kill switch", color = Gray, fontSize = 11.sp)
+                Text("• Auto-reconnect + diagnostics", color = Gray, fontSize = 11.sp)
+                Text("• Server favorites & history", color = Gray, fontSize = 11.sp)
             }
         }
 
         Spacer(Modifier.height(32.dp))
+    }
+
+    if (showDnsCheck) {
+        DnsCheckDialog(onDismiss = { showDnsCheck = false })
     }
 }
 
@@ -195,6 +295,28 @@ private fun SettingsToggleRow(
                 uncheckedBorderColor = Color.Transparent
             )
         )
+    }
+}
+
+@Composable
+private fun SettingsActionRow(
+    title: String,
+    subtitle: String,
+    action: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+            .clickable { onClick() },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(subtitle, color = Gray, fontSize = 12.sp)
+        }
+        Text(action, color = Orange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 

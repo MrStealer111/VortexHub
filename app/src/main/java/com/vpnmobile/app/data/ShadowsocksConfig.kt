@@ -1,8 +1,9 @@
 package com.vpnmobile.app.data
 
-import android.util.Base64
 import org.json.JSONObject
 import java.net.URLDecoder
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 data class ShadowsocksConfig(
     val host: String,
@@ -20,6 +21,7 @@ data class ShadowsocksConfig(
 }
 
 /** Parser for SIP002 and legacy Shadowsocks URIs, including Outline `ss://` keys. */
+@OptIn(ExperimentalEncodingApi::class)
 object ShadowsocksUri {
 
     private val supportedMethods = setOf(
@@ -89,7 +91,7 @@ object ShadowsocksUri {
             else -> return null
         }
         return try {
-            String(Base64.decode(padded, Base64.DEFAULT), Charsets.UTF_8)
+            Base64.decode(padded).toString(Charsets.UTF_8)
         } catch (_: Exception) {
             null
         }

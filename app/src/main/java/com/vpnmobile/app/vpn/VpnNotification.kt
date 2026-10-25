@@ -28,26 +28,48 @@ object VpnNotification {
         }
     }
 
-    fun build(context: Context, profileName: String, rx: Long, tx: Long, isConnected: Boolean): android.app.Notification {
+    fun build(
+        context: Context,
+        profileName: String,
+        rx: Long,
+        tx: Long,
+        isConnected: Boolean,
+        blocked: Boolean = false,
+    ): android.app.Notification {
         ensureChannel(context)
         val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
         val pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val title = if (isConnected) "VPN Connected • $profileName" else "VPN Connecting..."
-        val text = if (isConnected) "↓ ${format(rx)}  ↑ ${format(tx)}  • Tap to manage" else "Establishing secure tunnel..."
+        val title = when {
+            blocked -> "VPN Blocked • Kill Switch"
+            isConnected -> "VPN Connected • $profileName"
+            else -> "VPN Connecting..."
+        }
+        val text = when {
+            blocked -> "Tunnel lost — all traffic is blocked. Tap to manage."
+            isConnected -> "↓ ${format(rx)}  ↑ ${format(tx)}  • Tap to manage"
+            else -> "Establishing secure tunnel..."
+        }
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(text)
-            .setOngoing(isConnected)
+            .setOngoing(isConnected || blocked)
             .setOnlyAlertOnce(true)
             .setContentIntent(pi)
             .setCategory(androidx.core.app.NotificationCompat.CATEGORY_SERVICE)
             .build()
     }
 
-    fun show(context: Context, profileName: String, rx: Long, tx: Long, isConnected: Boolean) {
+    fun show(
+        context: Context,
+        profileName: String,
+        rx: Long,
+        tx: Long,
+        isConnected: Boolean,
+        blocked: Boolean = false,
+    ) {
         val mgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        mgr.notify(NOTIF_ID, build(context, profileName, rx, tx, isConnected))
+        mgr.notify(NOTIF_ID, build(context, profileName, rx, tx, isConnected, blocked))
     }
 
     fun cancel(context: Context) {

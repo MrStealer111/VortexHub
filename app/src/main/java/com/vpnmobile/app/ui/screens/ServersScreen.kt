@@ -20,16 +20,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,8 +56,10 @@ import com.vpnmobile.app.data.PingTester
 import com.vpnmobile.app.data.ServerApi
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
+import com.vpnmobile.app.ui.components.QrShareDialog
 import com.vpnmobile.app.vpn.VpnState
 import kotlinx.coroutines.launch
+import java.net.URL
 
 private val BgBlack = Color(0xFF0A0A0A)
 private val CardBg = Color(0xFF1E1E1E)
@@ -81,11 +87,18 @@ fun ServersScreen(
     val freeSelected by viewModel.freeSelected.collectAsStateWithLifecycle()
     val pingResults by viewModel.pingResults.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
+    val subscriptions by viewModel.subscriptions.collectAsStateWithLifecycle()
+    val subscriptionRefreshing by viewModel.subscriptionRefreshing.collectAsStateWithLifecycle()
+    val findingFastest by viewModel.findingFastest.collectAsStateWithLifecycle()
     var tab by remember { mutableStateOf("Free") }
-    var sortByTime by remember { mutableStateOf(false) }
+    var sortByPing by remember { mutableStateOf(false) }
 
     var showPlusMenu by remember { mutableStateOf(false) }
     var showManualSub by remember { mutableStateOf(false) }
+    var showAddSub by remember { mutableStateOf(false) }
+    var subUrl by remember { mutableStateOf("") }
+    var subName by remember { mutableStateOf("") }
+    var qrProfile by remember { mutableStateOf<TunnelProfile?>(null) }
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     val serverUrl by viewModel.serverUrl.collectAsStateWithLifecycle()
@@ -115,11 +128,17 @@ fun ServersScreen(
                         HorizontalDivider(color = Color(0xFF2C2C2E))
                         DropdownMenuItem(text = { Text("Import url from Clipboard", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; val t = clipboard.getText()?.text ?: ""; if (t.isNotBlank()) viewModel.addProfile("URL Import", "🌐", t) })
                         HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Text("Import Sub from Clipboard", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false })
+                        DropdownMenuItem(text = { Text("Add subscription URL", color = Color.White, fontSize = 13.sp) }, onClick = {
+                            showPlusMenu = false
+                            val clip = clipboard.getText()?.text?.trim().orEmpty()
+                            subUrl = if (clip.startsWith("https://")) clip else ""
+                            subName = ""
+                            showAddSub = true
+                        })
                         HorizontalDivider(color = Color(0xFF2C2C2E))
                         DropdownMenuItem(text = { Text("Scan config from QR Code", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; (onQrScan ?: onImport).invoke() })
                         HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Text("Update Subs", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; refreshTick++ })
+                        DropdownMenuItem(text = { Text("Update Subs", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; viewModel.refreshSubscriptions(); refreshTick++ })
                         HorizontalDivider(color = Color(0xFF2C2C2E))
                         DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = Color.White, fontSize = 13.sp); Text(if (showManualSub) "∧" else "∨", color = Color.White) } }, onClick = { showManualSub = !showManualSub })
                         if (showManualSub) {
@@ -148,7 +167,11 @@ fun ServersScreen(
             Box(
                 Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Personal") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Personal" }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
-            ) { Text("Personal", color = if (tab == "Personal") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+            ) { Text("Personal", color = if (tab == "Personal") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+            Box(
+                Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Subs") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Subs" }.padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) { Text("Subs", color = if (tab == "Subs") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
         }
         Spacer(Modifier.height(10.dp))
         Row(Modifier.padding(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -175,11 +198,11 @@ fun ServersScreen(
                 }
             }
             Card(
-                onClick = { sortByTime = !sortByTime },
+                onClick = { sortByPing = !sortByPing },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
             ) {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("↕", color = Gray, fontSize = 14.sp); Text(if (sortByTime) "Sort By Ping" else "Sort By Time", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text("↕", color = Gray, fontSize = 14.sp); Text(if (sortByPing) "Sort: Ping" else "Sort: Time", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     Spacer(Modifier.weight(1f)); Text("∨", color = Gray, fontSize = 12.sp)
                 }
             }
@@ -187,7 +210,7 @@ fun ServersScreen(
         Spacer(Modifier.height(10.dp))
         if (tab == "Free") {
             LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                val list = if (sortByTime) apiFree.sortedBy { freePings[it.name + it.uri] ?: 9999 } else apiFree
+                val list = if (sortByPing) apiFree.sortedBy { freePings[it.name + it.uri] ?: 9999 } else apiFree
                 if (list.isEmpty()) {
                     item { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { Text("Loading free servers...", color = Gray) } }
                 }
@@ -218,7 +241,12 @@ fun ServersScreen(
                 }
             }
         } else if (tab == "Favorites") {
-            val favProfiles = profiles.filter { it.id in favorites }
+            val favProfiles = profiles
+                .filter { it.id in favorites }
+                .let { list ->
+                    if (sortByPing) list.sortedBy { pingResults[it.id]?.takeIf { r -> r.success }?.ms ?: Int.MAX_VALUE }
+                    else list.sortedByDescending { it.createdAt }
+                }
             if (favProfiles.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -249,11 +277,61 @@ fun ServersScreen(
                                         Text(pingText, color = pingColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                                     }
                                 }
-                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     Text("★", color = Orange, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.toggleFavorite(p) })
                                     Text("⟡", color = Gray, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.testPing(p) })
+                                    Icon(Icons.Filled.QrCode2, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { qrProfile = p })
                                     Icon(Icons.Filled.Delete, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { viewModel.deleteProfile(p) })
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (tab == "Subs") {
+            if (subscriptions.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("No subscriptions", color = Gray, fontSize = 14.sp)
+                        Spacer(Modifier.height(8.dp))
+                        Text("Add an https:// subscription URL", color = Gray, fontSize = 12.sp)
+                        Spacer(Modifier.height(14.dp))
+                        Card(
+                            onClick = { subUrl = ""; subName = ""; showAddSub = true },
+                            shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
+                        ) {
+                            Text("+ Add subscription", color = Orange, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    item {
+                        Card(
+                            onClick = { subUrl = ""; subName = ""; showAddSub = true },
+                            shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
+                        ) {
+                            Text("+ Add subscription", color = Orange, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp))
+                        }
+                    }
+                    items(subscriptions, key = { it.id }) { sub ->
+                        val count = profiles.count { it.subscriptionId == sub.id }
+                        val isRefreshing = sub.id in subscriptionRefreshing
+                        Card(
+                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
+                        ) {
+                            Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(sub.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("$count configs · ${updatedLabel(sub.lastUpdated)}", color = Gray, fontSize = 11.sp)
+                                    Text(subscriptionHost(sub.url), color = Color(0xFF5C5C5E), fontSize = 10.sp, maxLines = 1)
+                                }
+                                if (isRefreshing) {
+                                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange)
+                                } else {
+                                    Text("⟳", color = Orange, fontSize = 18.sp, modifier = Modifier.padding(horizontal = 10.dp).clickable { viewModel.refreshSubscriptions() })
+                                }
+                                Icon(Icons.Filled.Delete, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { viewModel.removeSubscription(sub) })
                             }
                         }
                     }
@@ -265,12 +343,37 @@ fun ServersScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("No personal configs", color = Gray, fontSize = 14.sp)
                         Spacer(Modifier.height(8.dp))
-                        Text("Tap + to add SS / VLESS / VMESS", color = Gray, fontSize = 12.sp)
+                        Text("Tap + to add WireGuard / Shadowsocks / WARP", color = Gray, fontSize = 12.sp)
                     }
                 }
             } else {
+                val sortedProfiles = if (sortByPing) {
+                    profiles.sortedBy { pingResults[it.id]?.takeIf { r -> r.success }?.ms ?: Int.MAX_VALUE }
+                } else {
+                    profiles.sortedByDescending { it.createdAt }
+                }
                 LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(profiles, key = { it.id }) { p ->
+                    item {
+                        Card(
+                            onClick = {
+                                if (!findingFastest) {
+                                    viewModel.findFastest { best -> if (best != null) onConnect(best) }
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2014)), border = BorderStroke(1.dp, Orange.copy(alpha = 0.35f))
+                        ) {
+                            Row(Modifier.padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(34.dp).clip(CircleShape).background(Orange.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) { Text("⚡", fontSize = 17.sp) }
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text("Fastest server", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(if (findingFastest) "Testing latency..." else "Ping all and connect to the best", color = Gray, fontSize = 11.sp)
+                                }
+                                if (findingFastest) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange) else Text("→", color = Orange, fontSize = 18.sp)
+                            }
+                        }
+                    }
+                    items(sortedProfiles, key = { it.id }) { p ->
                         val ping = pingResults[p.id]
                         val pingText = when { ping == null -> "Tap ⟡"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
                         val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> Color(0xFF00C853); else -> Color(0xFFFFAB00) }
@@ -285,15 +388,16 @@ fun ServersScreen(
                                 Text(p.flag, fontSize = 18.sp)
                                 Spacer(Modifier.width(8.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(p.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(p.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Text(proto, color = Gray, fontSize = 11.sp)
                                         Text(pingText, color = pingColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                                     }
                                 }
-                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     Text("★", color = if (isFav) Orange else Gray, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.toggleFavorite(p) })
                                     Text("⟡", color = Gray, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.testPing(p) })
+                                    Icon(Icons.Filled.QrCode2, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { qrProfile = p })
                                     Icon(Icons.Filled.Delete, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { viewModel.deleteProfile(p) })
                                 }
                             }
@@ -302,5 +406,69 @@ fun ServersScreen(
                 }
             }
         }
+    }
+
+    qrProfile?.let { profile ->
+        QrShareDialog(profile = profile, onDismiss = { qrProfile = null })
+    }
+
+    if (showAddSub) {
+        AlertDialog(
+            onDismissRequest = { showAddSub = false },
+            containerColor = Color(0xFF1C1C1E),
+            title = { Text("Add subscription", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = subUrl,
+                        onValueChange = { subUrl = it },
+                        label = { Text("Subscription URL (https://)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = subName,
+                        onValueChange = { subName = it },
+                        label = { Text("Name (optional)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Supported contents: ss:// links, WireGuard configs, base64-encoded lists.", color = Gray, fontSize = 11.sp)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = subUrl.trim().startsWith("https://"),
+                    onClick = {
+                        showAddSub = false
+                        viewModel.addSubscription(subUrl, subName)
+                        subUrl = ""
+                        subName = ""
+                    },
+                ) { Text("Add", color = Orange, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddSub = false }) { Text("Cancel", color = Gray) }
+            },
+        )
+    }
+}
+
+private fun subscriptionHost(url: String): String = try {
+    URL(url).host
+} catch (_: Exception) {
+    url
+}
+
+private fun updatedLabel(timestamp: Long): String {
+    if (timestamp <= 0L) return "never updated"
+    val minutes = ((System.currentTimeMillis() - timestamp) / 60_000).coerceAtLeast(0)
+    return when {
+        minutes < 1 -> "updated just now"
+        minutes < 60 -> "updated ${minutes}m ago"
+        minutes < 1440 -> "updated ${minutes / 60}h ago"
+        else -> "updated ${minutes / 1440}d ago"
     }
 }

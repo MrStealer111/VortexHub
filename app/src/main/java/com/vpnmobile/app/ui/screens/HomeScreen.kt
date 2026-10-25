@@ -107,17 +107,27 @@ fun HomeScreen(
             VortexPowerButton(state = status.state, onClick = {
                 when (status.state) {
                     VpnState.CONNECTED, VpnState.CONNECTING -> viewModel.disconnect()
+                    VpnState.BLOCKED -> { val p = targetProfile; if (p != null) viewModel.reconnect(p) else viewModel.disconnect() }
                     VpnState.DISCONNECTED -> { val p = targetProfile; if (p != null) onConnect(p) else onOpenServers() }
                 }
             })
             Spacer(Modifier.height(16.dp))
             Text(
-                text = when (status.state) { VpnState.CONNECTED -> "Connected"; VpnState.CONNECTING -> "Connecting..."; else -> "Disconnected" },
+                text = when (status.state) {
+                    VpnState.CONNECTED -> "Connected"
+                    VpnState.CONNECTING -> "Connecting..."
+                    VpnState.BLOCKED -> "Blocked"
+                    else -> "Disconnected"
+                },
                 color = GrayText, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = when (status.state) { VpnState.CONNECTED -> "Connected for ${ConfigTools.formatDuration(now - status.connectedAtMillis)}"; else -> "Select a server & tap to start" },
+                text = when (status.state) {
+                    VpnState.CONNECTED -> "Connected for ${ConfigTools.formatDuration(now - status.connectedAtMillis)}"
+                    VpnState.BLOCKED -> "Kill switch active — traffic is blocked"
+                    else -> "Select a server & tap to start"
+                },
                 color = GrayText.copy(alpha = 0.7f), fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center
             )
             if (needsPermission) {
@@ -168,11 +178,13 @@ private fun ServerCard(
                     when (state) {
                         VpnState.CONNECTED -> "✓ Connected"
                         VpnState.CONNECTING -> "Connecting..."
+                        VpnState.BLOCKED -> "Blocked"
                         VpnState.DISCONNECTED -> "Manage"
                     },
                     color = when (state) {
                         VpnState.CONNECTED -> Color(0xFF00C853)
                         VpnState.CONNECTING -> Orange
+                        VpnState.BLOCKED -> Color(0xFFFF5252)
                         VpnState.DISCONNECTED -> Orange
                     },
                     fontSize = 12.sp, fontWeight = FontWeight.Bold
@@ -188,6 +200,7 @@ private fun ServerCard(
 private fun VortexPowerButton(state: VpnState, onClick: () -> Unit) {
     val connected = state == VpnState.CONNECTED
     val connecting = state == VpnState.CONNECTING
+    val blocked = state == VpnState.BLOCKED
     val infinite = rememberInfiniteTransition(label = "pow")
     val pulse by infinite.animateFloat(initialValue = 0.96f, targetValue = 1.06f, animationSpec = infiniteRepeatable(tween(800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "pulse")
     val glow by infinite.animateFloat(initialValue = 0.15f, targetValue = 0.35f, animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "glow")
@@ -228,7 +241,7 @@ private fun VortexPowerButton(state: VpnState, onClick: () -> Unit) {
                         else Icon(PowerIcon, null, Modifier.size(32.dp), Color(0xFF1C1C1E))
                     }
                     Spacer(Modifier.height(6.dp))
-                    Text(if (connected) "Connected" else if (connecting) "Connecting..." else "Tap to Connect", color = if (connected) Orange else Color(0xFF1C1C1E), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 0.5.sp)
+                    Text(if (connected) "Connected" else if (connecting) "Connecting..." else if (blocked) "Retry" else "Tap to Connect", color = if (connected || blocked) Orange else Color(0xFF1C1C1E), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 0.5.sp)
                 }
             }
         }

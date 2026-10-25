@@ -9,6 +9,7 @@ data class TunnelProfile(
     val flag: String,
     val configText: String,
     val createdAt: Long,
+    val subscriptionId: String = "",
 )
 
 fun List<TunnelProfile>.toJson(): String {
@@ -21,6 +22,7 @@ fun List<TunnelProfile>.toJson(): String {
                 .put("flag", profile.flag)
                 .put("configText", Crypto.encrypt(profile.configText))
                 .put("createdAt", profile.createdAt)
+                .put("subscriptionId", profile.subscriptionId)
         )
     }
     return array.toString()
@@ -38,6 +40,7 @@ fun String.toProfiles(): List<TunnelProfile> = try {
             flag = obj.optString("flag", "\uD83C\uDF10"),
             configText = dec,
             createdAt = obj.optLong("createdAt", 0L),
+            subscriptionId = obj.optString("subscriptionId", ""),
         )
     }
 } catch (_: Exception) {

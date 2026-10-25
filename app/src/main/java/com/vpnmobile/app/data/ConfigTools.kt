@@ -4,7 +4,7 @@ import java.util.Locale
 
 object ConfigTools {
 
-    private val allowedIpsRegex = Regex("(?m)^(AllowedIPs\\s*=\\s*).*$")
+    private val allowedIpsRegex = Regex("(?m)^(AllowedIPs\\s*=\\s*)(.*)$")
 
     /**
      * Forces every peer to route all IPv4/IPv6 traffic through the tunnel.
@@ -13,6 +13,12 @@ object ConfigTools {
      */
     fun applyKillSwitch(configText: String): String =
         allowedIpsRegex.replace(configText) { "AllowedIPs = 0.0.0.0/0, ::/0" }
+
+    /** Routes IPv6 into the tunnel so IPv6 traffic cannot bypass the VPN. */
+    fun applyIpv6Block(configText: String): String = allowedIpsRegex.replace(configText) { match ->
+        val values = match.groupValues[2].split(',').map { it.trim() }
+        if (values.any { it == "::/0" }) match.value else "AllowedIPs = ${match.groupValues[2]}, ::/0"
+    }
 
     fun isAutoWarp(configText: String): Boolean {
         val t = configText.trim()

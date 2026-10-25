@@ -10,6 +10,8 @@ import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.vpnmobile.app.data.ShadowsocksConfig
+import java.net.InetSocketAddress
+import java.net.Socket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +44,11 @@ object ShadowsocksRuntime {
         _state.value = VpnState.DISCONNECTED
     }
 
+    fun setBlocked() {
+        lastError = null
+        _state.value = VpnState.BLOCKED
+    }
+
     fun reset() {
         lastError = null
         _state.value = VpnState.DISCONNECTED
@@ -62,6 +69,8 @@ class ShadowsocksVpnService : VpnService() {
         private const val EXTRA_SPLIT_ENABLED = "split_enabled"
         private const val EXTRA_SPLIT_MODE = "split_mode"
         private const val EXTRA_SPLIT_PACKAGES = "split_packages"
+        private const val EXTRA_KILL_SWITCH = "kill_switch"
+        private const val EXTRA_BLOCK_IPV6 = "block_ipv6"
 
         fun start(
             context: Context,
@@ -70,6 +79,8 @@ class ShadowsocksVpnService : VpnService() {
             splitEnabled: Boolean,
             splitMode: String,
             splitPackages: Set<String>,
+            killSwitch: Boolean = false,
+            blockIpv6: Boolean = true,
         ) {
             val intent = Intent(context, ShadowsocksVpnService::class.java).apply {
                 action = ACTION_CONNECT
@@ -81,6 +92,8 @@ class ShadowsocksVpnService : VpnService() {
                 putExtra(EXTRA_SPLIT_ENABLED, splitEnabled)
                 putExtra(EXTRA_SPLIT_MODE, splitMode)
                 putStringArrayListExtra(EXTRA_SPLIT_PACKAGES, ArrayList(splitPackages))
+                putExtra(EXTRA_KILL_SWITCH, killSwitch)
+                putExtra(EXTRA_BLOCK_IPV6, blockIpv6)
             }
             ContextCompat.startForegroundService(context, intent)
         }
@@ -99,6 +112,11 @@ class ShadowsocksVpnService : VpnService() {
     private var client: Client? = null
     @Volatile
     private var tunFd: ParcelFileDescriptor? = null
+    @Volatile
+    private var killSwitch = false
+    private var blockIpv6 = true
+    @Volatile
+    private var monitor: Thread? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -119,6 +137,8 @@ class ShadowsocksVpnService : VpnService() {
                 val splitEnabled = intent.getBooleanExtra(EXTRA_SPLIT_ENABLED, false)
                 val splitMode = intent.getStringExtra(EXTRA_SPLIT_MODE) ?: "exclude"
                 val splitPackages = intent.getStringArrayListExtra(EXTRA_SPLIT_PACKAGES)?.toSet() ?: emptySet()
+                killSwitch = intent.getBooleanExtra(EXTRA_KILL_SWITCH, false)
+                blockIpv6 = intent.getBooleanExtra(EXTRA_BLOCK_IPV6, true)
                 startTunnel(name, config, splitEnabled, splitMode, splitPackages)
             }
             ACTION_DISCONNECT -> {
@@ -140,30 +160,95 @@ class ShadowsocksVpnService : VpnService() {
         ShadowsocksRuntime.setConnecting()
         startForegroundNotification(name)
         Thread({
+            var fd: ParcelFileDescriptor? = null
             try {
-                val fd = establish(splitEnabled, splitMode, splitPackages)
+                fd = establish(splitEnabled, splitMode, splitPackages)
+                tunFd = fd
                 val client = Shadowsocks.newClientFromJSON(config.toClientJson())
                 val tunnel = Tun2socks.connectShadowsocksTunnel(fd.fd.toLong(), client, true)
-                this.tunFd = fd
                 this.client = client
                 this.tunnel = tunnel
                 ShadowsocksRuntime.setConnected()
                 Log.d(TAG, "Shadowsocks tunnel connected to ${config.host}:${config.port}")
+                startMonitor(name, config.host, config.port)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to start Shadowsocks tunnel", e)
-                val message = friendlyError(e)
-                teardown()
-                ShadowsocksRuntime.setError(message)
-                stopSelf()
+                if (killSwitch && fd != null) {
+                    ShadowsocksRuntime.setBlocked()
+                    VpnNotification.show(this, name, 0, 0, false, blocked = true)
+                    Log.w(TAG, "Kill switch active — TUN kept open, traffic blocked")
+                } else {
+                    val message = friendlyError(e)
+                    teardown()
+                    ShadowsocksRuntime.setError(message)
+                    stopSelf()
+                }
             } catch (e: UnsatisfiedLinkError) {
                 Log.e(TAG, "Shadowsocks native library missing", e)
-                teardown()
-                ShadowsocksRuntime.setError("Shadowsocks engine unavailable on this device")
-                stopSelf()
+                if (killSwitch && fd != null) {
+                    ShadowsocksRuntime.setBlocked()
+                    VpnNotification.show(this, name, 0, 0, false, blocked = true)
+                } else {
+                    teardown()
+                    ShadowsocksRuntime.setError("Shadowsocks engine unavailable on this device")
+                    stopSelf()
+                }
             } finally {
                 starting = false
             }
         }, "shadowsocks-connect").start()
+    }
+
+    private fun startMonitor(name: String, host: String, port: Int) {
+        monitor?.interrupt()
+        monitor = Thread({
+            var upstreamFailures = 0
+            while (!Thread.currentThread().isInterrupted) {
+                try {
+                    Thread.sleep(3_000)
+                } catch (_: InterruptedException) {
+                    return@Thread
+                }
+                val active = tunnel ?: return@Thread
+                val connected = try {
+                    active.isConnected()
+                } catch (_: Exception) {
+                    false
+                }
+                if (!connected) {
+                    if (killSwitch) {
+                        blockTraffic(name, "Tunnel lost — kill switch blocking traffic")
+                    } else {
+                        ShadowsocksRuntime.setError("Tunnel lost")
+                        teardown()
+                        stopSelf()
+                    }
+                    return@Thread
+                }
+                if (killSwitch) {
+                    upstreamFailures = if (probeUpstream(host, port)) 0 else upstreamFailures + 1
+                    if (upstreamFailures >= 3) {
+                        blockTraffic(name, "Upstream unreachable — kill switch blocking traffic")
+                        return@Thread
+                    }
+                }
+            }
+        }, "shadowsocks-monitor").apply { start() }
+    }
+
+    private fun probeUpstream(host: String, port: Int): Boolean = try {
+        Socket().use { socket ->
+            socket.connect(InetSocketAddress(host, port), 2_000)
+        }
+        true
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun blockTraffic(name: String, message: String) {
+        ShadowsocksRuntime.setBlocked()
+        VpnNotification.show(this, name, 0, 0, false, blocked = true)
+        Log.w(TAG, message)
     }
 
     private fun establish(
@@ -175,10 +260,13 @@ class ShadowsocksVpnService : VpnService() {
             .setSession("VortexHub")
             .setMtu(1500)
             .addAddress("10.111.222.1", 24)
+            .addAddress("fd00:111:222::1", 64)
             .addDnsServer("1.1.1.1")
+            .addDnsServer("2606:4700:4700::1111")
             .addRoute("0.0.0.0", 0)
             .addRoute("1.1.1.1", 32)
             .addDisallowedApplication(packageName)
+        if (blockIpv6) builder.addRoute("::", 0)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) builder.setMetered(false)
         if (splitEnabled && splitPackages.isNotEmpty()) {
             if (splitMode == "include") {
@@ -217,6 +305,8 @@ class ShadowsocksVpnService : VpnService() {
     }
 
     private fun teardown(resetState: Boolean = true) {
+        monitor?.interrupt()
+        monitor = null
         try {
             tunnel?.disconnect()
         } catch (_: Exception) {

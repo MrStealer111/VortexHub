@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.UUID
 
 private val Context.dataStore by preferencesDataStore(name = "vpn_store")
@@ -28,6 +30,8 @@ class TunnelStore(private val context: Context) {
         val FAVORITES = stringPreferencesKey("favorites")
         val CONNECTION_HISTORY = stringPreferencesKey("connection_history")
         val DATA_USAGE = stringPreferencesKey("data_usage")
+        val SUBSCRIPTIONS = stringPreferencesKey("subscriptions_json")
+        val BLOCK_IPV6 = booleanPreferencesKey("block_ipv6")
     }
 
     val profiles: Flow<List<TunnelProfile>> = context.dataStore.data
@@ -78,13 +82,25 @@ class TunnelStore(private val context: Context) {
     val dataUsage: Flow<String> = context.dataStore.data
         .map { prefs -> prefs[Keys.DATA_USAGE] ?: "0" }
 
-    suspend fun addProfile(name: String, flag: String, configText: String): TunnelProfile {
+    val subscriptions: Flow<List<Subscription>> = context.dataStore.data
+        .map { prefs -> prefs[Keys.SUBSCRIPTIONS].orEmpty().toSubscriptions() }
+
+    val blockIpv6: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[Keys.BLOCK_IPV6] ?: true }
+
+    suspend fun addProfile(
+        name: String,
+        flag: String,
+        configText: String,
+        subscriptionId: String = "",
+    ): TunnelProfile {
         val profile = TunnelProfile(
             id = UUID.randomUUID().toString(),
             name = name,
             flag = flag,
             configText = configText,
             createdAt = System.currentTimeMillis(),
+            subscriptionId = subscriptionId,
         )
         context.dataStore.edit { prefs ->
             val current = prefs[Keys.PROFILES].orEmpty().toProfiles().toMutableList()
@@ -144,6 +160,10 @@ class TunnelStore(private val context: Context) {
         context.dataStore.edit { prefs -> prefs[Keys.CUSTOM_DNS] = dns.trim() }
     }
 
+    suspend fun setBlockIpv6(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.BLOCK_IPV6] = enabled }
+    }
+
     suspend fun setAutoReconnect(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[Keys.AUTO_RECONNECT] = enabled }
     }
@@ -174,4 +194,99 @@ class TunnelStore(private val context: Context) {
             prefs[Keys.DATA_USAGE] = (current + bytes).toString()
         }
     }
+
+    suspend fun addSubscription(name: String, url: String): Subscription {
+        val sub = Subscription(
+            id = UUID.randomUUID().toString(),
+            name = name,
+            url = url,
+            createdAt = System.currentTimeMillis(),
+        )
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.SUBSCRIPTIONS].orEmpty().toSubscriptions().toMutableList()
+            current.add(sub)
+            prefs[Keys.SUBSCRIPTIONS] = current.toSubscriptionsJson()
+        }
+        return sub
+    }
+
+    suspend fun removeSubscription(id: String) {
+        context.dataStore.edit { prefs ->
+            val subscriptions = prefs[Keys.SUBSCRIPTIONS].orEmpty().toSubscriptions()
+                .filterNot { it.id == id }
+            prefs[Keys.SUBSCRIPTIONS] = subscriptions.toSubscriptionsJson()
+
+            val profiles = prefs[Keys.PROFILES].orEmpty().toProfiles()
+            val removed = profiles.filter { it.subscriptionId == id }.map { it.id }.toSet()
+            val remaining = profiles.filterNot { it.subscriptionId == id }
+            prefs[Keys.PROFILES] = remaining.toJson()
+            if (prefs[Keys.SELECTED_PROFILE].orEmpty() in removed) {
+                remaining.lastOrNull()?.let { prefs[Keys.SELECTED_PROFILE] = it.id }
+                    ?: prefs.remove(Keys.SELECTED_PROFILE)
+            }
+        }
+    }
+
+    suspend fun replaceSubscriptionProfiles(
+        subscriptionId: String,
+        entries: List<SubscriptionParser.Entry>,
+    ) {
+        context.dataStore.edit { prefs ->
+            val profiles = prefs[Keys.PROFILES].orEmpty().toProfiles()
+            val removedIds = profiles.filter { it.subscriptionId == subscriptionId }.map { it.id }.toSet()
+            val kept = profiles.filterNot { it.subscriptionId == subscriptionId }
+            val added = entries.map { entry ->
+                TunnelProfile(
+                    id = UUID.randomUUID().toString(),
+                    name = entry.name,
+                    flag = entry.flag,
+                    configText = entry.configText,
+                    createdAt = System.currentTimeMillis(),
+                    subscriptionId = subscriptionId,
+                )
+            }
+            prefs[Keys.PROFILES] = (kept + added).toJson()
+
+            val selected = prefs[Keys.SELECTED_PROFILE]
+            if (selected.isNullOrBlank() || selected in removedIds) {
+                added.firstOrNull()?.let { prefs[Keys.SELECTED_PROFILE] = it.id }
+            }
+
+            val subscriptions = prefs[Keys.SUBSCRIPTIONS].orEmpty().toSubscriptions().map {
+                if (it.id == subscriptionId) it.copy(lastUpdated = System.currentTimeMillis()) else it
+            }
+            prefs[Keys.SUBSCRIPTIONS] = subscriptions.toSubscriptionsJson()
+        }
+    }
+}
+
+private fun List<Subscription>.toSubscriptionsJson(): String {
+    val array = JSONArray()
+    forEach { sub ->
+        array.put(
+            JSONObject()
+                .put("id", sub.id)
+                .put("name", sub.name)
+                .put("url", sub.url)
+                .put("lastUpdated", sub.lastUpdated)
+                .put("createdAt", sub.createdAt)
+        )
+    }
+    return array.toString()
+}
+
+private fun String.toSubscriptions(): List<Subscription> = try {
+    val array = JSONArray(this)
+    (0 until array.length()).map { i ->
+        val obj = array.getJSONObject(i)
+        Subscription(
+            id = obj.getString("id"),
+            name = obj.optString("name", "Subscription"),
+            url = obj.getString("url"),
+            lastUpdated = obj.optLong("lastUpdated", 0L),
+            createdAt = obj.optLong("createdAt", 0L),
+        )
+    }.sortedBy { it.createdAt }
+} catch (_: Exception) {
+    emptyList()
 }

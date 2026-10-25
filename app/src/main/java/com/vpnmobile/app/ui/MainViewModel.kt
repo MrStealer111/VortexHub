@@ -6,9 +6,18 @@ import androidx.lifecycle.viewModelScope
 import com.vpnmobile.app.R
 import com.vpnmobile.app.VpnApplication
 import com.vpnmobile.app.data.PingTester
+import com.vpnmobile.app.data.Subscription
+import com.vpnmobile.app.data.SubscriptionFetcher
+import com.vpnmobile.app.data.SubscriptionParser
 import com.vpnmobile.app.data.TunnelProfile
+import com.vpnmobile.app.util.Diagnostics
 import com.vpnmobile.app.vpn.VpnState
 import com.wireguard.android.backend.BackendException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -18,7 +27,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -55,11 +67,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val autoReconnect: StateFlow<Boolean> =
         store.autoReconnect.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val blockIpv6: StateFlow<Boolean> =
+        store.blockIpv6.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     val favorites: StateFlow<Set<String>> =
         store.favorites.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     val connectionHistory: StateFlow<List<String>> =
         store.connectionHistory.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val subscriptions: StateFlow<List<Subscription>> =
+        store.subscriptions.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private val _subscriptionRefreshing = MutableStateFlow<Set<String>>(emptySet())
+    val subscriptionRefreshing: StateFlow<Set<String>> = _subscriptionRefreshing
+
+    private val _findingFastest = MutableStateFlow(false)
+    val findingFastest: StateFlow<Boolean> = _findingFastest
 
     val selectedProfile: StateFlow<TunnelProfile?> = combine(
         store.profiles,
@@ -119,7 +143,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun connect(profile: TunnelProfile) {
         viewModelScope.launch {
             try {
-                vpn.connect(profile, killSwitch.value, splitEnabled.value, splitMode.value, excludedApps.value)
+                vpn.connect(
+                    profile,
+                    killSwitch.value,
+                    blockIpv6.value,
+                    splitEnabled.value,
+                    splitMode.value,
+                    excludedApps.value,
+                )
                 store.addToHistory(profile.id)
                 _messages.tryEmit(getApplication<Application>().getString(R.string.server_connected, profile.name))
             } catch (e: BackendException) {
@@ -185,6 +216,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun reconnect(profile: TunnelProfile) {
+        viewModelScope.launch {
+            try {
+                vpn.disconnect()
+            } catch (_: Exception) {
+            }
+            delay(600)
+            connect(profile)
+        }
+    }
+
     fun toggleFavorite(profile: TunnelProfile) {
         viewModelScope.launch { store.toggleFavorite(profile.id) }
     }
@@ -222,6 +264,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { store.setKillSwitch(enabled) }
     }
 
+    fun setBlockIpv6(enabled: Boolean) {
+        viewModelScope.launch { store.setBlockIpv6(enabled) }
+    }
+
     fun setSplitEnabled(enabled: Boolean) {
         viewModelScope.launch { store.setSplitEnabled(enabled) }
     }
@@ -255,5 +301,108 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             profiles.value.forEach { testPing(it) }
         }
+    }
+
+    fun addSubscription(url: String, name: String = "") {
+        val trimmed = url.trim()
+        if (!trimmed.startsWith("https://", ignoreCase = true)) {
+            _messages.tryEmit("Subscription URL must start with https://")
+            return
+        }
+        viewModelScope.launch {
+            val display = name.trim().ifBlank { subscriptionHost(trimmed) }
+            if (subscriptions.value.any { it.url == trimmed }) {
+                _messages.tryEmit("Subscription already added")
+                return@launch
+            }
+            try {
+                val sub = store.addSubscription(display, trimmed)
+                Diagnostics.log("Subscription", "Added ${sub.name}")
+                refreshSubscription(sub)
+            } catch (e: Exception) {
+                Diagnostics.log("Subscription", e)
+                _messages.tryEmit("Could not add subscription: ${e.message ?: "unknown error"}")
+            }
+        }
+    }
+
+    fun refreshSubscriptions() {
+        viewModelScope.launch {
+            val list = subscriptions.value
+            if (list.isEmpty()) {
+                _messages.tryEmit("No subscriptions to update")
+                return@launch
+            }
+            list.forEach { refreshSubscription(it) }
+        }
+    }
+
+    private suspend fun refreshSubscription(sub: Subscription) {
+        _subscriptionRefreshing.update { it + sub.id }
+        try {
+            val payload = SubscriptionFetcher.fetch(sub.url)
+            val entries = SubscriptionParser.parse(payload, sub.name)
+            if (entries.isEmpty()) {
+                _messages.tryEmit("${sub.name}: no supported configs found")
+                return
+            }
+            store.replaceSubscriptionProfiles(sub.id, entries)
+            Diagnostics.log("Subscription", "${sub.name}: ${entries.size} configs")
+            _messages.tryEmit("${sub.name}: ${entries.size} configs updated")
+        } catch (e: Exception) {
+            Diagnostics.log("Subscription", e)
+            _messages.tryEmit("${sub.name}: ${e.message ?: "update failed"}")
+        } finally {
+            _subscriptionRefreshing.update { it - sub.id }
+        }
+    }
+
+    fun removeSubscription(sub: Subscription) {
+        viewModelScope.launch {
+            store.removeSubscription(sub.id)
+            _messages.tryEmit("${sub.name} removed")
+        }
+    }
+
+    fun findFastest(onResult: (TunnelProfile?) -> Unit) {
+        viewModelScope.launch {
+            val list = profiles.value
+            if (list.isEmpty()) {
+                _messages.tryEmit("Add a server first")
+                onResult(null)
+                return@launch
+            }
+            _findingFastest.value = true
+            try {
+                val results = coroutineScope {
+                    list.take(60).map { profile ->
+                        async(Dispatchers.IO) { profile to PingTester.ping(profile.configText) }
+                    }.awaitAll()
+                }
+                results.forEach { (profile, result) ->
+                    _pingResults.update { it + (profile.id to result) }
+                }
+                val best = results.filter { it.second.success }.minByOrNull { it.second.ms }?.first
+                if (best == null) {
+                    _messages.tryEmit("No reachable server found")
+                } else {
+                    store.setSelectedProfile(best.id)
+                    _messages.tryEmit("Fastest: ${best.name} (${results.first { it.first.id == best.id }.second.ms} ms)")
+                }
+                onResult(best)
+            } catch (e: Exception) {
+                Diagnostics.log("Fastest", e)
+                _messages.tryEmit("Fastest server check failed")
+                onResult(null)
+            } finally {
+                _findingFastest.value = false
+            }
+        }
+    }
+
+    private fun subscriptionHost(url: String): String = try {
+        URL(url).host.takeIf { it.isNotBlank() } ?: "Subscription"
+    } catch (_: Exception) {
+        "Subscription"
     }
 }

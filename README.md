@@ -19,7 +19,8 @@
 
 ### 🔐 Security
 - **AES-256 Encryption** — Keystore-encrypted configs
-- **Kill Switch** — Block internet when VPN drops
+- **Kill Switch** — Fail-closed TUN; blocks internet if the tunnel or upstream drops
+- **IPv6 Leak Protection** — Routes IPv6 into the tunnel (optional block mode)
 - **Anti-Root Detection** — Security hardening
 
 ### 🌐 Protocols
@@ -50,7 +51,14 @@
 - **Connection History** — Last 10 connections
 - **Custom DNS** — Cloudflare/Google
 - **Custom Server JSON** — asset list or your own URL
-- **QR Code Import** — CameraX + MLKit
+- **QR Code Import / Share** — CameraX + MLKit import, ZXing QR export
+- **Subscriptions** — ss://, WireGuard and base64 lists with refresh
+- **Fastest Server** — One-tap lowest-latency pick
+- **Quick Settings Tile** — Connect/disconnect from the shade
+- **Home Screen Widget** — Status + connect/disconnect button
+- **Diagnostics** — Redacted log export and live DNS/IP check
+- **Always-on VPN** — System always-on + block-without-VPN shortcut
+- **Private DNS (DoH)** — System encrypted-DNS setup guide
 
 ---
 
@@ -161,11 +169,13 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 - QR scan button
 
 ### ⚙️ Settings Screen
-- Auto-Connect toggle
-- Auto-Reconnect toggle
-- Kill Switch toggle
-- Split Tunneling toggle
-- DNS selector (Cloudflare/Google)
+- Auto-Connect / Auto-Reconnect toggles
+- Kill Switch + Always-on VPN
+- Battery optimization shortcut
+- Block IPv6 toggle
+- Split Tunneling
+- DNS selector, Private DNS (DoH) guide, DNS/IP check
+- Diagnostics export (redacted)
 - About/Version info
 
 ### 👤 Person Screen
@@ -207,6 +217,15 @@ gomobile bind -target=android -androidapi 24 \
 3. Go to Configs → + → Add manual config → Shadowsocks
 4. Paste the link, save and connect
 
+### Subscriptions
+1. Go to Configs → + → Add subscription URL
+2. Paste an HTTPS URL returning `ss://` links, WireGuard blocks, or a base64-encoded list
+3. Open the Subs tab to refresh or delete the subscription
+
+### Quick Settings & Widget
+- Add the **VortexHub** tile from the Quick Settings edit screen
+- Long-press the home screen → Widgets → VortexHub for the status widget
+
 ### Split Tunneling
 1. Go to Settings → Split Tunnel
 2. Select apps to exclude/include
@@ -228,7 +247,8 @@ gomobile bind -target=android -androidapi 24 \
 - **Anti-Debug** — Blocks debugger attachment
 - **SSL Pinning** — Certificate validation
 - **No Logs** — Privacy-first design
-- **Kill Switch** — No IP leaks
+- **Kill Switch** — Fail-closed, no IP leaks on tunnel or upstream loss
+- **Redacted diagnostics** — Credentials stripped from exported logs
 
 ---
 
