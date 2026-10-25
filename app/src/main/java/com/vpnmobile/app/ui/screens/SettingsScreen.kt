@@ -81,6 +81,7 @@ fun SettingsScreen(
     val secureScreen by viewModel.secureScreen.collectAsStateWithLifecycle()
     val hideKeys by viewModel.hideKeys.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val accentColor by viewModel.accentColor.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -158,9 +159,26 @@ fun SettingsScreen(
             }
         }
 
-        DividerLine()
+        Spacer(Modifier.height(8.dp))
+        Row(
+            Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf("orange" to "Orange", "green" to "Green", "blue" to "Blue").forEach { (value, label) ->
+                FilterChip(
+                    selected = accentColor == value,
+                    onClick = { viewModel.setAccentColor(value) },
+                    label = { Text(label, fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Orange.copy(alpha = 0.18f),
+                        selectedLabelColor = Orange,
+                        labelColor = Gray,
+                    ),
+                )
+            }
+        }
 
-        // VPN Settings
+        DividerLine()
         SectionHeader("VPN Settings")
 
         SettingsToggleRow(

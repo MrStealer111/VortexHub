@@ -82,6 +82,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val themeMode: StateFlow<String> =
         store.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
 
+    val accentColor: StateFlow<String> =
+        store.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, "orange")
+
     val language: StateFlow<String> =
         store.language.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
 
@@ -297,6 +300,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setThemeMode(mode: String) {
         viewModelScope.launch { store.setThemeMode(mode) }
+    }
+
+    fun setAccentColor(color: String) {
+        viewModelScope.launch { store.setAccentColor(color) }
     }
 
     fun setLanguage(language: String) {

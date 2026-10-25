@@ -60,31 +60,31 @@ data class AppPalette(
     val error: Color,
 )
 
-val DarkPalette = AppPalette(
+val DarkPalette = { accent: Color -> AppPalette(
     bg = Color(0xFF0A0A0A),
     surface = Color(0xFF1C1C1E),
     surfaceVariant = Color(0xFF2C2C2E),
     text = Color(0xFFFFFFFF),
     textSecondary = Color(0xFF8E8E93),
     border = Color(0xFF2C2C2E),
-    accent = Color(0xFFFF8C00),
+    accent = accent,
     success = Color(0xFF00C853),
     error = Color(0xFFFF5252),
-)
+) }
 
-val LightPalette = AppPalette(
+val LightPalette = { accent: Color -> AppPalette(
     bg = Color(0xFFF4F4F7),
     surface = Color(0xFFFFFFFF),
     surfaceVariant = Color(0xFFE9E9EF),
     text = Color(0xFF121216),
     textSecondary = Color(0xFF6C6C72),
     border = Color(0xFFDADAE2),
-    accent = Color(0xFFE07800),
+    accent = accent,
     success = Color(0xFF0A9D4A),
     error = Color(0xFFD93636),
-)
+) }
 
-val LocalAppPalette = staticCompositionLocalOf { DarkPalette }
+val LocalAppPalette = staticCompositionLocalOf { DarkPalette(Color(0xFFFF8C00)) }
 
 object AppTheme {
     val colors: AppPalette
@@ -96,9 +96,10 @@ object AppTheme {
 @Composable
 fun VpnMobileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    accent: Color = Color(0xFFFF8C00),
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalAppPalette provides if (darkTheme) DarkPalette else LightPalette) {
+    CompositionLocalProvider(LocalAppPalette provides if (darkTheme) DarkPalette(accent) else LightPalette(accent)) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
             typography = AppTypography,

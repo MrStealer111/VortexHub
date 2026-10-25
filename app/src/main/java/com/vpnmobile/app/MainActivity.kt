@@ -14,6 +14,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.getValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
@@ -78,12 +79,18 @@ class MainActivity : FragmentActivity() {
         }
         setContent {
             val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+            val accentColor by viewModel.accentColor.collectAsStateWithLifecycle()
             val darkTheme = when (themeMode) {
                 "light" -> false
                 "dark" -> true
                 else -> isSystemInDarkTheme()
             }
-            VpnMobileTheme(darkTheme = darkTheme) {
+            val accent = when (accentColor) {
+                "green" -> Color(0xFF00C853)
+                "blue" -> Color(0xFF2563EB)
+                else -> Color(0xFFFF8C00)
+            }
+            VpnMobileTheme(darkTheme = darkTheme, accent = accent) {
                 val needsPermission by viewModel.needsPermission.collectAsStateWithLifecycle()
                 VpnApp(
                     viewModel = viewModel,

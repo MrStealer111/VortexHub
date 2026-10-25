@@ -36,6 +36,7 @@ class TunnelStore(private val context: Context) {
         val SECURE_SCREEN = booleanPreferencesKey("secure_screen")
         val HIDE_KEYS = booleanPreferencesKey("hide_keys")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val ACCENT_COLOR = stringPreferencesKey("accent_color")
         val LANGUAGE = stringPreferencesKey("language")
     }
 
@@ -104,6 +105,9 @@ class TunnelStore(private val context: Context) {
 
     val themeMode: Flow<String> = context.dataStore.data
         .map { prefs -> prefs[Keys.THEME_MODE] ?: "system" }
+
+    val accentColor: Flow<String> = context.dataStore.data
+        .map { prefs -> prefs[Keys.ACCENT_COLOR] ?: "orange" }
 
     val language: Flow<String> = context.dataStore.data
         .map { prefs -> prefs[Keys.LANGUAGE] ?: "system" }
@@ -198,6 +202,10 @@ class TunnelStore(private val context: Context) {
 
     suspend fun setThemeMode(mode: String) {
         context.dataStore.edit { prefs -> prefs[Keys.THEME_MODE] = mode }
+    }
+
+    suspend fun setAccentColor(color: String) {
+        context.dataStore.edit { prefs -> prefs[Keys.ACCENT_COLOR] = color }
     }
 
     suspend fun setLanguage(language: String) {
