@@ -20,7 +20,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -88,7 +92,9 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("←", color = Orange, fontSize = 20.sp, modifier = Modifier.clickable { onBack() })
+            IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", Modifier.size(22.dp), Orange)
+            }
             Spacer(Modifier.width(12.dp))
             Text("Settings", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         }

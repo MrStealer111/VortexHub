@@ -61,7 +61,14 @@ fun PremiumScreen(onBack: () -> Unit) {
                         Text("VortexHub Premium", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
                     }
                     Spacer(Modifier.height(8.dp))
-                    Text(if (isPremium) "You are Premium ✓" else "Unlock all premium servers, fastest speeds, no limits", color = Color.White, fontSize = 13.sp)
+                    if (isPremium) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Filled.Check, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                            Text("You are Premium", color = Color.White, fontSize = 13.sp)
+                        }
+                    } else {
+                        Text("Unlock all premium servers, fastest speeds, no limits", color = Color.White, fontSize = 13.sp)
+                    }
                 }
             }
             listOf("Unlimited premium servers", "Fastest WarpGuard nodes", "No ads", "Priority support").forEach { feat ->
@@ -90,7 +97,13 @@ fun PremiumScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
-                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(Color(0xFF00C853).copy(0.15f)).padding(12.dp), contentAlignment = Alignment.Center) { Text("Premium Active ✓", color = Color(0xFF00C853), fontWeight = FontWeight.Bold) }
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(Color(0xFF00C853).copy(0.15f)).padding(12.dp), contentAlignment = Alignment.Center) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Check, null, Modifier.size(16.dp), Color(0xFF00C853))
+                        Spacer(Modifier.size(6.dp))
+                        Text("Premium Active", color = Color(0xFF00C853), fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
     }

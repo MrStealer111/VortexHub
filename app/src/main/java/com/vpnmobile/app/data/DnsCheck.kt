@@ -17,8 +17,12 @@ object DnsCheck {
         val error: String? = null,
     )
 
+    suspend fun egressIp(): String? = withContext(Dispatchers.IO) {
+        runCatching { fetch("https://api.ipify.org") }.getOrNull()
+    }
+
     suspend fun run(context: Context): Result = withContext(Dispatchers.IO) {
-        val egress = runCatching { fetch("https://api.ipify.org") }.getOrNull()
+        val egress = egressIp()
         val resolver = runCatching {
             InetAddress.getByName("whoami.ds.akahelp.net").hostAddress
         }.getOrNull()

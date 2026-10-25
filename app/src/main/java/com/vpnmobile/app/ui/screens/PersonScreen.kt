@@ -23,8 +23,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import com.vpnmobile.app.ui.components.ProfileAvatar
 import com.vpnmobile.app.ui.effects.GlassPrimaryButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -101,7 +104,7 @@ fun PersonScreen(viewModel: MainViewModel, onPremium: (() -> Unit)? = null, onSe
                     Text("Save & Refresh Free", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
                 Spacer(Modifier.height(6.dp))
-                Text("Empty = use bundled + Cloudflare. Paste your GitHub raw URL, update JSON there → Free auto updates, no APK rebuild.", color = Gray, fontSize = 10.sp, lineHeight = 13.sp)
+                Text("Empty = use bundled + Cloudflare. Paste your GitHub raw URL, update JSON there, then Free auto updates, no APK rebuild.", color = Gray, fontSize = 10.sp, lineHeight = 13.sp)
             }
         }
         Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)) {
@@ -124,14 +127,18 @@ fun PersonScreen(viewModel: MainViewModel, onPremium: (() -> Unit)? = null, onSe
         Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFFF8C00).copy(0.12f)), border = BorderStroke(1.dp, Color(0xFFFF8C00).copy(0.3f)), modifier = Modifier.fillMaxWidth().clickable { onPremium?.invoke() }) {
             Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Column { Text("VortexHub Premium", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp); Text("Unlock premium servers", color = Color(0xFFFF8C00), fontSize = 11.sp) }
-                Text("Upgrade →", color = Color(0xFFFF8C00), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Upgrade", color = Color(0xFFFF8C00), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(14.dp), Color(0xFFFF8C00))
+                }
             }
         }
         Spacer(Modifier.height(8.dp))
         Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border), modifier = Modifier.fillMaxWidth().clickable { onSettings?.invoke() }) {
             Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Column { Text("Settings", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp); Text("VPN, DNS, Auto-connect", color = Gray, fontSize = 11.sp) }
-                Text("→", color = Gray, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp), Gray)
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -140,7 +147,7 @@ fun PersonScreen(viewModel: MainViewModel, onPremium: (() -> Unit)? = null, onSe
         Spacer(Modifier.height(12.dp))
         if (profiles.isEmpty()) {
             Box(Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).background(CardBg).padding(32.dp), contentAlignment = Alignment.Center) {
-                Text("No keys yet\nAdd from Configs → +", color = Gray, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text("No keys yet\nAdd from the Configs tab", color = Gray, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -148,7 +155,7 @@ fun PersonScreen(viewModel: MainViewModel, onPremium: (() -> Unit)? = null, onSe
                     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)) {
                         Column(Modifier.padding(14.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(p.flag, fontSize = 16.sp)
+                                ProfileAvatar(p.flag, contentSize = 16.dp)
                                 Spacer(Modifier.width(8.dp))
                                 Text(p.name, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.weight(1f))
                                 IconButton(onClick = { clipboard.setText(AnnotatedString(p.configText)) }, modifier = Modifier.size(32.dp)) { Icon(Icons.Filled.ContentCopy, null, tint = Gray, modifier = Modifier.size(16.dp)) }

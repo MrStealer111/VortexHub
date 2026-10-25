@@ -22,6 +22,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,6 +69,7 @@ import com.vpnmobile.app.data.PingTester
 import com.vpnmobile.app.data.ServerApi
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
+import com.vpnmobile.app.ui.components.ProfileAvatar
 import com.vpnmobile.app.ui.components.QrShareDialog
 import com.vpnmobile.app.vpn.VpnState
 import kotlinx.coroutines.launch
@@ -118,7 +132,7 @@ fun ServersScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { profiles.forEach { viewModel.deleteProfile(it) } }, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.Delete, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
                 Box {
-                    Box(Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f)).clickable { showPlusMenu = true }, contentAlignment = Alignment.Center) { Text("+", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+                    Box(Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f)).clickable { showPlusMenu = true }, contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, null, Modifier.size(20.dp), Color.White) }
                     DropdownMenu(expanded = showPlusMenu, onDismissRequest = { showPlusMenu = false; showManualSub = false }, modifier = Modifier.background(Color(0xFF1E1E1E))) {
                         DropdownMenuItem(text = { Text("Import from Clipboard", color = Color.White, fontSize = 13.sp) }, onClick = {
                             showPlusMenu = false
@@ -140,7 +154,7 @@ fun ServersScreen(
                         HorizontalDivider(color = Color(0xFF2C2C2E))
                         DropdownMenuItem(text = { Text("Update Subs", color = Color.White, fontSize = 13.sp) }, onClick = { showPlusMenu = false; viewModel.refreshSubscriptions(); refreshTick++ })
                         HorizontalDivider(color = Color(0xFF2C2C2E))
-                        DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = Color.White, fontSize = 13.sp); Text(if (showManualSub) "∧" else "∨", color = Color.White) } }, onClick = { showManualSub = !showManualSub })
+                        DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = Color.White, fontSize = 13.sp); Icon(if (showManualSub) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, Modifier.size(16.dp), Color.White) } }, onClick = { showManualSub = !showManualSub })
                         if (showManualSub) {
                             HorizontalDivider(color = Color(0xFF2C2C2E))
                             listOf("wireguard", "warp", "shadowsocks").forEach { p ->
@@ -163,7 +177,11 @@ fun ServersScreen(
             Box(
                 Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Favorites") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Favorites" }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
-            ) { Text("★ Favorites", color = if (tab == "Favorites") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+            ) { Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.Star, null, Modifier.size(14.dp), if (tab == "Favorites") Orange else Gray)
+                    Spacer(Modifier.width(5.dp))
+                    Text("Favorites", color = if (tab == "Favorites") Orange else Gray, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                } }
             Box(
                 Modifier.weight(1f).clip(RoundedCornerShape(50)).background(if (tab == "Personal") Color(0xFF3A2A14) else Color.Transparent).clickable { tab = "Personal" }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
@@ -194,7 +212,7 @@ fun ServersScreen(
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
             ) {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(if (freeLoading) "◷" else "◷", color = Gray, fontSize = 14.sp); Text(if (freeLoading) "Checking..." else "Check Pings", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Icon(Icons.Rounded.Timer, null, Modifier.size(14.dp), Gray); Text(if (freeLoading) "Checking..." else "Check Pings", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
             }
             Card(
@@ -202,8 +220,8 @@ fun ServersScreen(
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
             ) {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("↕", color = Gray, fontSize = 14.sp); Text(if (sortByPing) "Sort: Ping" else "Sort: Time", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                    Spacer(Modifier.weight(1f)); Text("∨", color = Gray, fontSize = 12.sp)
+                    Icon(Icons.Rounded.SwapVert, null, Modifier.size(14.dp), Gray); Text(if (sortByPing) "Sort: Ping" else "Sort: Time", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Spacer(Modifier.weight(1f)); Icon(Icons.Rounded.ExpandMore, null, Modifier.size(16.dp), Gray)
                 }
             }
         }
@@ -228,14 +246,14 @@ fun ServersScreen(
                         shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isFreeSelected) Color(0xFF2A2520) else CardBg), border = BorderStroke(1.dp, if (isFreeSelected) Orange.copy(alpha = 0.4f) else Border)
                     ) {
                         Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0xFF2C2C2E)), contentAlignment = Alignment.Center) { Text(s.flag, fontSize = 18.sp) }
+                            Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0xFF2C2C2E)), contentAlignment = Alignment.Center) { ProfileAvatar(s.flag, contentSize = 18.dp) }
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(s.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                                 Text("${com.vpnmobile.app.data.ConfigTools.protocolLabel(s.uri)} · $displayMs", color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                             }
-                            if (isFreeConnected) Box(Modifier.size(20.dp).clip(CircleShape).background(Color(0xFF00C853).copy(0.15f)), contentAlignment = Alignment.Center) { Text("✓", color = Color(0xFF00C853), fontSize = 12.sp, fontWeight = FontWeight.Bold) }
-                            else if (freeLoading) androidx.compose.material3.CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = Orange) else Text("›", color = Gray, fontSize = 18.sp)
+                            if (isFreeConnected) Box(Modifier.size(20.dp).clip(CircleShape).background(Color(0xFF00C853).copy(0.15f)), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Check, null, Modifier.size(12.dp), Color(0xFF00C853)) }
+                            else if (freeLoading) androidx.compose.material3.CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = Orange) else Icon(Icons.Rounded.ChevronRight, null, Modifier.size(18.dp), Gray)
                         }
                     }
                 }
@@ -252,14 +270,14 @@ fun ServersScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("No favorite servers", color = Gray, fontSize = 14.sp)
                         Spacer(Modifier.height(8.dp))
-                        Text("Tap ★ on any server to add to favorites", color = Gray, fontSize = 12.sp)
+                        Text("Tap the star on any server to add to favorites", color = Gray, fontSize = 12.sp)
                     }
                 }
             } else {
                 LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(favProfiles, key = { it.id }) { p ->
                         val ping = pingResults[p.id]
-                        val pingText = when { ping == null -> "Tap ⟡"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
+                        val pingText = when { ping == null -> "Tap ping"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
                         val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> Color(0xFF00C853); else -> Color(0xFFFFAB00) }
                         val proto = com.vpnmobile.app.data.ConfigTools.protocolLabel(p.configText)
                         val isSelected = p.id == selected?.id
@@ -268,7 +286,7 @@ fun ServersScreen(
                             shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF2A2520) else CardBg), border = BorderStroke(1.dp, if (isSelected) Orange.copy(alpha = 0.4f) else Border)
                         ) {
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(p.flag, fontSize = 18.sp)
+                                ProfileAvatar(p.flag, contentSize = 18.dp)
                                 Spacer(Modifier.width(8.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(p.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
@@ -278,8 +296,8 @@ fun ServersScreen(
                                     }
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    Text("★", color = Orange, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.toggleFavorite(p) })
-                                    Text("⟡", color = Gray, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.testPing(p) })
+                                    Icon(Icons.Rounded.Star, null, Modifier.size(18.dp).clickable { viewModel.toggleFavorite(p) }, Orange)
+                                    Icon(Icons.Rounded.Speed, null, Modifier.size(18.dp).clickable { viewModel.testPing(p) }, Gray)
                                     Icon(Icons.Filled.QrCode2, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { qrProfile = p })
                                     Icon(Icons.Filled.Delete, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { viewModel.deleteProfile(p) })
                                 }
@@ -300,7 +318,11 @@ fun ServersScreen(
                             onClick = { subUrl = ""; subName = ""; showAddSub = true },
                             shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
                         ) {
-                            Text("+ Add subscription", color = Orange, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp))
+                            Row(Modifier.padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Rounded.Add, null, Modifier.size(15.dp), Orange)
+                                Spacer(Modifier.width(5.dp))
+                                Text("Add subscription", color = Orange, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -311,7 +333,11 @@ fun ServersScreen(
                             onClick = { subUrl = ""; subName = ""; showAddSub = true },
                             shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
                         ) {
-                            Text("+ Add subscription", color = Orange, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp))
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Rounded.Add, null, Modifier.size(15.dp), Orange)
+                                Spacer(Modifier.width(5.dp))
+                                Text("Add subscription", color = Orange, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                     items(subscriptions, key = { it.id }) { sub ->
@@ -329,7 +355,7 @@ fun ServersScreen(
                                 if (isRefreshing) {
                                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange)
                                 } else {
-                                    Text("⟳", color = Orange, fontSize = 18.sp, modifier = Modifier.padding(horizontal = 10.dp).clickable { viewModel.refreshSubscriptions() })
+                                    Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp).padding(horizontal = 10.dp).clickable { viewModel.refreshSubscriptions() }, Orange)
                                 }
                                 Icon(Icons.Filled.Delete, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { viewModel.removeSubscription(sub) })
                             }
@@ -363,19 +389,19 @@ fun ServersScreen(
                             shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2014)), border = BorderStroke(1.dp, Orange.copy(alpha = 0.35f))
                         ) {
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.size(34.dp).clip(CircleShape).background(Orange.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) { Text("⚡", fontSize = 17.sp) }
+                                Box(Modifier.size(34.dp).clip(CircleShape).background(Orange.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Bolt, null, Modifier.size(18.dp), Orange) }
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text("Fastest server", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                                     Text(if (findingFastest) "Testing latency..." else "Ping all and connect to the best", color = Gray, fontSize = 11.sp)
                                 }
-                                if (findingFastest) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange) else Text("→", color = Orange, fontSize = 18.sp)
+                                if (findingFastest) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange) else Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(18.dp), Orange)
                             }
                         }
                     }
                     items(sortedProfiles, key = { it.id }) { p ->
                         val ping = pingResults[p.id]
-                        val pingText = when { ping == null -> "Tap ⟡"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
+                        val pingText = when { ping == null -> "Tap ping"; !ping.success -> "Failed"; else -> "${ping.ms} ms" }
                         val pingColor = when { ping == null || !ping.success -> Gray; ping.ms < 300 -> Color(0xFF00C853); else -> Color(0xFFFFAB00) }
                         val proto = com.vpnmobile.app.data.ConfigTools.protocolLabel(p.configText)
                         val isSelected = p.id == selected?.id
@@ -385,7 +411,7 @@ fun ServersScreen(
                             shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF2A2520) else CardBg), border = BorderStroke(1.dp, if (isSelected) Orange.copy(alpha = 0.4f) else Border)
                         ) {
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(p.flag, fontSize = 18.sp)
+                                ProfileAvatar(p.flag, contentSize = 18.dp)
                                 Spacer(Modifier.width(8.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(p.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -395,8 +421,8 @@ fun ServersScreen(
                                     }
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    Text("★", color = if (isFav) Orange else Gray, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.toggleFavorite(p) })
-                                    Text("⟡", color = Gray, fontSize = 16.sp, modifier = Modifier.clickable { viewModel.testPing(p) })
+                                    Icon(if (isFav) Icons.Rounded.Star else Icons.Rounded.StarBorder, null, Modifier.size(18.dp).clickable { viewModel.toggleFavorite(p) }, if (isFav) Orange else Gray)
+                                    Icon(Icons.Rounded.Speed, null, Modifier.size(18.dp).clickable { viewModel.testPing(p) }, Gray)
                                     Icon(Icons.Filled.QrCode2, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { qrProfile = p })
                                     Icon(Icons.Filled.Delete, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { viewModel.deleteProfile(p) })
                                 }

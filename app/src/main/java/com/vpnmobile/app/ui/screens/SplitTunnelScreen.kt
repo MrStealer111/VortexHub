@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.rounded.CallSplit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -176,7 +177,7 @@ fun SplitTunnelScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Spacer(Modifier.height(24.dp))
                 Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF1C1C1E)).padding(24.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF2C2C2E)), contentAlignment = Alignment.Center) { Text("◈", color = Cyan, fontSize = 20.sp) }
+                        Box(Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF2C2C2E)), contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Rounded.CallSplit, null, Modifier.size(24.dp), Cyan) }
                         Spacer(Modifier.height(12.dp))
                         Text("Split tunneling disabled", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
                         Text("All app traffic goes through VPN", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8E93))

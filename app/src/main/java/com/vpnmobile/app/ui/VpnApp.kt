@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -126,6 +127,7 @@ fun VpnApp(
                         onConnect = onConnect,
                         onRequestVpnPermission = onRequestVpnPermission,
                         onOpenServers = { navController.navigateTo(Routes.SERVERS) },
+                        onOpenSettings = { navController.navigate(Routes.SETTINGS_SCREEN) },
                     )
                 }
                 composable(
@@ -244,7 +246,7 @@ private fun PillNavItem(icon: ImageVector, label: String, selected: Boolean, onC
             Icon(icon, null, Modifier.size(18.dp), contentColor)
             if (selected) {
                 Text(label, color = contentColor, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 0.3.sp)
-                if (showArrow) Text("→", color = contentColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                if (showArrow) Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(12.dp), contentColor)
             }
         }
     }
