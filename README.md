@@ -11,7 +11,21 @@
 <p align="center">
   <img src="ui_preview.png" width="1000" alt="VortexHub UI — Home connected, Home disconnected, Configs">
 </p>
-<p align="center"><sub>Home — Connected &nbsp;·&nbsp; Home — Disconnected &nbsp;·&nbsp; Configs</sub></p>
+<p align="center"><sub>Home — Connected &nbsp;·&nbsp; Home — Disconnected &nbsp;·&nbsp; Configs · Personal</sub></p>
+
+<details>
+<summary><strong>📸 Full UI gallery — 11 screens</strong></summary>
+<br>
+
+| | | |
+|:--:|:--:|:--:|
+| <a href="docs/previews/02_home_connected.png"><img src="docs/previews/02_home_connected.png" width="240" alt="Home connected"></a><br><sub>Home · Connected</sub> | <a href="docs/previews/01_home_disconnected.png"><img src="docs/previews/01_home_disconnected.png" width="240" alt="Home disconnected"></a><br><sub>Home · Disconnected</sub> | <a href="docs/previews/03_configs_personal.png"><img src="docs/previews/03_configs_personal.png" width="240" alt="Configs personal"></a><br><sub>Configs · Personal</sub> |
+| <a href="docs/previews/04_subscriptions.png"><img src="docs/previews/04_subscriptions.png" width="240" alt="Subscriptions"></a><br><sub>Subscriptions</sub> | <a href="docs/previews/05_person.png"><img src="docs/previews/05_person.png" width="240" alt="Person and free servers"></a><br><sub>Person · Free Servers</sub> | <a href="docs/previews/06_settings_top.png"><img src="docs/previews/06_settings_top.png" width="240" alt="Settings VPN"></a><br><sub>Settings · VPN</sub> |
+| <a href="docs/previews/07_settings_bottom.png"><img src="docs/previews/07_settings_bottom.png" width="240" alt="Settings DNS"></a><br><sub>Settings · DNS &amp; About</sub> | <a href="docs/previews/08_dns_check.png"><img src="docs/previews/08_dns_check.png" width="240" alt="DNS and IP check"></a><br><sub>DNS / IP Check</sub> | <a href="docs/previews/09_qr_share.png"><img src="docs/previews/09_qr_share.png" width="240" alt="QR export"></a><br><sub>QR Export</sub> |
+| <a href="docs/previews/10_qs_tile.png"><img src="docs/previews/10_qs_tile.png" width="240" alt="Quick Settings tile"></a><br><sub>Quick Settings Tile</sub> | <a href="docs/previews/11_widget.png"><img src="docs/previews/11_widget.png" width="240" alt="Home screen widget"></a><br><sub>Home Screen Widget</sub> | |
+
+<p align="center"><sub>Screenshots from the real v1.4.0 build on Android 15 (API 35). QR code shown is a demo key, not a live server.</sub></p>
+</details>
 
 ---
 
