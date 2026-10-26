@@ -20,8 +20,8 @@
 | | | |
 |:--:|:--:|:--:|
 | <a href="docs/previews/02_home_connected.png"><img src="docs/previews/02_home_connected.png" width="240" alt="Home connected"></a><br><sub>Home · Connected</sub> | <a href="docs/previews/01_home_disconnected.png"><img src="docs/previews/01_home_disconnected.png" width="240" alt="Home disconnected"></a><br><sub>Home · Disconnected</sub> | <a href="docs/previews/03_configs_personal.png"><img src="docs/previews/03_configs_personal.png" width="240" alt="Configs personal"></a><br><sub>Configs · Personal</sub> |
-| <a href="docs/previews/04_subscriptions.png"><img src="docs/previews/04_subscriptions.png" width="240" alt="Subscriptions"></a><br><sub>Subscriptions</sub> | <a href="docs/previews/05_person.png"><img src="docs/previews/05_person.png" width="240" alt="Person and free servers"></a><br><sub>Profile</sub> | <a href="docs/previews/06_settings_top.png"><img src="docs/previews/06_settings_top.png" width="240" alt="Settings VPN"></a><br><sub>Settings · Appearance</sub> |
-| <a href="docs/previews/07_settings_bottom.png"><img src="docs/previews/07_settings_bottom.png" width="240" alt="Settings DNS"></a><br><sub>Settings · Network</sub> | <a href="docs/previews/08_dns_check.png"><img src="docs/previews/08_dns_check.png" width="240" alt="DNS and IP check"></a><br><sub>DNS / IP Check</sub> | <a href="docs/previews/09_qr_share.png"><img src="docs/previews/09_qr_share.png" width="240" alt="QR export"></a><br><sub>Share Config</sub> |
+| <a href="docs/previews/04_subscriptions.png"><img src="docs/previews/04_subscriptions.png" width="240" alt="Subscriptions"></a><br><sub>Subscriptions</sub> | <a href="docs/previews/05_person.png"><img src="docs/previews/05_person.png" width="240" alt="Person and free servers"></a><br><sub>Profile</sub> | <a href="docs/previews/06_settings_top.png"><img src="docs/previews/06_settings_top.png" width="240" alt="Settings hub"></a><br><sub>Settings</sub> |
+| <a href="docs/previews/07_settings_bottom.png"><img src="docs/previews/07_settings_bottom.png" width="240" alt="Settings appearance"></a><br><sub>Settings · Appearance</sub> | <a href="docs/previews/08_dns_check.png"><img src="docs/previews/08_dns_check.png" width="240" alt="DNS and IP check"></a><br><sub>DNS / IP Check</sub> | <a href="docs/previews/09_qr_share.png"><img src="docs/previews/09_qr_share.png" width="240" alt="QR export"></a><br><sub>Share Config</sub> |
 | <a href="docs/previews/10_qs_tile.png"><img src="docs/previews/10_qs_tile.png" width="240" alt="Quick Settings tile"></a><br><sub>Quick Settings Tile</sub> | <a href="docs/previews/11_widget.png"><img src="docs/previews/11_widget.png" width="240" alt="Home screen widget"></a><br><sub>Home Screen Widget</sub> | <a href="docs/previews/12_split_tunnel.png"><img src="docs/previews/12_split_tunnel.png" width="240" alt="Split tunnel"></a><br><sub>Split Tunnel</sub> |
 
 <p align="center"><sub>Screenshots from the real v1.4.0 build on Android 15 (API 35). QR code shown is a demo key, not a live server.</sub></p>
@@ -183,14 +183,13 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 - QR scan button
 
 ### ⚙️ Settings Screen
-- Auto-Connect / Auto-Reconnect toggles
-- Kill Switch + Always-on VPN
-- Battery optimization shortcut
-- Block IPv6 toggle
-- Split Tunneling
-- DNS selector, Private DNS (DoH) guide, DNS/IP check
-- Diagnostics export (redacted)
-- About/Version info
+- Category hub with icon cards that open dedicated sub-pages
+- **Appearance** — theme mode, accent color, language
+- **VPN** — auto-connect/reconnect, kill switch, always-on, battery optimization, split tunneling, IPv6 blocking, latency sorting, background auto-refresh
+- **DNS** — custom resolver, Private DNS (DoH), DNS/IP check
+- **Security** — biometric app lock, screenshot blocking, key masking
+- **Diagnostics** — redacted log export
+- **About** — version and feature overview
 
 ### 👤 Person Screen
 - Device Hardware ID
@@ -234,7 +233,9 @@ gomobile bind -target=android -androidapi 24 \
 ### Subscriptions
 1. Go to Configs → + → Add subscription URL
 2. Paste an HTTPS URL returning `ss://` links, WireGuard blocks, or a base64-encoded list
-3. Open the Subs tab to refresh or delete the subscription
+3. Open the Subs tab to refresh, rename, or delete a subscription
+4. Use **Health check** to ping every node, and the filter chips to show one subscription at a time
+5. Export/import subscriptions as JSON from the plus menu, and enable background auto-refresh in Settings → VPN
 
 ### Quick Settings & Widget
 - Add the **VortexHub** tile from the Quick Settings edit screen
