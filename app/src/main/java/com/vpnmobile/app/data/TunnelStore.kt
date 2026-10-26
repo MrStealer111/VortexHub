@@ -331,6 +331,25 @@ class TunnelStore(private val context: Context) {
             prefs[Keys.SUBSCRIPTIONS] = subscriptions.toSubscriptionsJson()
         }
     }
+
+    suspend fun updateSubscriptionUsage(id: String, usage: SubscriptionUsage) {
+        context.dataStore.edit { prefs ->
+            val subscriptions = prefs[Keys.SUBSCRIPTIONS].orEmpty().toSubscriptions().map {
+                if (it.id == id) {
+                    it.copy(
+                        upload = usage.upload,
+                        download = usage.download,
+                        total = usage.total,
+                        expireAt = usage.expireAt,
+                        usageUpdatedAt = System.currentTimeMillis(),
+                    )
+                } else {
+                    it
+                }
+            }
+            prefs[Keys.SUBSCRIPTIONS] = subscriptions.toSubscriptionsJson()
+        }
+    }
 }
 
 private fun List<Subscription>.toSubscriptionsJson(): String {
@@ -343,6 +362,11 @@ private fun List<Subscription>.toSubscriptionsJson(): String {
                 .put("url", sub.url)
                 .put("lastUpdated", sub.lastUpdated)
                 .put("createdAt", sub.createdAt)
+                .put("upload", sub.upload)
+                .put("download", sub.download)
+                .put("total", sub.total)
+                .put("expireAt", sub.expireAt)
+                .put("usageUpdatedAt", sub.usageUpdatedAt)
         )
     }
     return array.toString()
@@ -358,6 +382,11 @@ private fun String.toSubscriptions(): List<Subscription> = try {
             url = obj.getString("url"),
             lastUpdated = obj.optLong("lastUpdated", 0L),
             createdAt = obj.optLong("createdAt", 0L),
+            upload = obj.optLong("upload", 0L),
+            download = obj.optLong("download", 0L),
+            total = obj.optLong("total", 0L),
+            expireAt = obj.optLong("expireAt", 0L),
+            usageUpdatedAt = obj.optLong("usageUpdatedAt", 0L),
         )
     }.sortedBy { it.createdAt }
 } catch (_: Exception) {

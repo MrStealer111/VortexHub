@@ -66,7 +66,7 @@
 - **Custom DNS** — Cloudflare/Google
 - **Custom Server JSON** — asset list or your own URL
 - **QR Code Import / Share** — CameraX + MLKit import, ZXing QR export
-- **Subscriptions** — ss://, WireGuard and base64 lists with refresh
+- **Subscriptions** — ss://, WireGuard and base64 lists with refresh, data usage and expiry badges
 - **Fastest Server** — One-tap lowest-latency pick
 - **Quick Settings Tile** — Connect/disconnect from the shade
 - **Home Screen Widget** — Status + connect/disconnect button
@@ -162,6 +162,30 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 - Android SDK 35
 - Android Studio Ladybug+ (or CLI)
 
+### CI & Releases
+Three GitHub Actions workflows run automatically:
+
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| `build.yml` | Push to `master` | Builds, runs unit tests + lint, uploads the debug APK |
+| `test.yml` | Pull request | Runs unit tests + lint |
+| `release.yml` | `v*` tag or manual dispatch | Tests, builds a signed release, uploads the APK and publishes a GitHub Release |
+
+Add these repository secrets for signed releases:
+
+| Secret | Purpose |
+| --- | --- |
+| `VORTEXHUB_KEYSTORE_BASE64` | Base64-encoded release keystore |
+| `VORTEXHUB_KEYSTORE_PASSWORD` | Keystore password |
+| `VORTEXHUB_KEY_ALIAS` | Key alias |
+| `VORTEXHUB_KEY_PASSWORD` | Key password |
+
+Publish a release by pushing a tag:
+```bash
+git tag v1.4.1
+git push origin v1.4.1
+```
+
 ---
 
 ## 📱 Screenshots
@@ -236,6 +260,7 @@ gomobile bind -target=android -androidapi 24 \
 3. Open the Subs tab to refresh, rename, or delete a subscription
 4. Use **Health check** to ping every node, and the filter chips to show one subscription at a time
 5. Export/import subscriptions as JSON from the plus menu, and enable background auto-refresh in Settings → VPN
+6. When the panel sends a `subscription-userinfo` header, the Subs tab shows used/total data and days left; background refresh alerts you when data is low or the plan is about to expire
 
 ### Quick Settings & Widget
 - Add the **VortexHub** tile from the Quick Settings edit screen

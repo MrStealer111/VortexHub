@@ -52,6 +52,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.vpnmobile.app.ui.i18n.Text
@@ -79,6 +80,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vpnmobile.app.data.PingTester
 import com.vpnmobile.app.data.ServerApi
 import com.vpnmobile.app.data.Subscription
+import com.vpnmobile.app.data.SubscriptionUsage
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
 import com.vpnmobile.app.ui.components.ProfileAvatar
@@ -86,6 +88,7 @@ import com.vpnmobile.app.ui.components.QrShareDialog
 import com.vpnmobile.app.vpn.VpnState
 import kotlinx.coroutines.launch
 import java.net.URL
+import java.util.Locale
 
 private val BgBlack: Color
     @Composable get() = AppTheme.colors.bg
@@ -472,6 +475,10 @@ fun ServersScreen(
                                     val healthText = if (health != null) " · ${health.healthy}/${health.total} healthy" else ""
                                     Text("$count configs · ${updatedLabel(sub.lastUpdated)}$healthText", color = if (health != null && health.healthy < health.total) Color(0xFFFFAB00) else Gray, fontSize = 11.sp)
                                     Text(subscriptionHost(sub.url), color = AppTheme.colors.textSecondary.copy(alpha = 0.7f), fontSize = 10.sp, maxLines = 1)
+                                    sub.usageOrNull()?.let { usage ->
+                                        Spacer(Modifier.height(8.dp))
+                                        SubscriptionUsageBlock(usage)
+                                    }
                                 }
                                 if (isRefreshing) {
                                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange)
@@ -673,6 +680,62 @@ private fun subscriptionHost(url: String): String = try {
     URL(url).host
 } catch (_: Exception) {
     url
+}
+
+@Composable
+private fun SubscriptionUsageBlock(usage: SubscriptionUsage) {
+    val now = System.currentTimeMillis()
+    val expired = usage.isExpired(now)
+    val daysLeft = usage.daysLeft(now)
+    val low = usage.isLowData()
+    val expiring = usage.isExpiringSoon(now)
+    val warn = expired || low || expiring
+    val tint = when {
+        expired || low -> Color(0xFFFF5C5C)
+        expiring -> Color(0xFFFFAB00)
+        else -> Gray
+    }
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(formatBytes(usage.used), color = tint, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            if (usage.hasQuota) {
+                Text(" / ${formatBytes(usage.total)}", color = Gray, fontSize = 11.sp)
+            } else {
+                Text(" used", color = Gray, fontSize = 11.sp)
+            }
+            Spacer(Modifier.weight(1f))
+            when {
+                expired -> Text("Expired", color = Color(0xFFFF5C5C), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                daysLeft >= 0L -> Text(
+                    if (daysLeft <= 0L) "Expires today" else "$daysLeft days left",
+                    color = if (daysLeft <= 3L) Color(0xFFFFAB00) else Gray,
+                    fontSize = 11.sp,
+                )
+            }
+        }
+        if (usage.hasQuota) {
+            Spacer(Modifier.height(5.dp))
+            LinearProgressIndicator(
+                progress = { usage.fractionUsed() },
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                color = if (warn) tint else Orange,
+                trackColor = Border,
+            )
+        }
+    }
+}
+
+private fun formatBytes(bytes: Long): String {
+    if (bytes <= 0L) return "0 B"
+    if (bytes < 1024L) return "$bytes B"
+    val units = arrayOf("KB", "MB", "GB", "TB")
+    var value = bytes / 1024.0
+    var unit = 0
+    while (value >= 1024.0 && unit < units.lastIndex) {
+        value /= 1024.0
+        unit++
+    }
+    return String.format(Locale.US, "%.1f %s", value, units[unit])
 }
 
 private fun updatedLabel(timestamp: Long): String {

@@ -440,7 +440,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             Diagnostics.log("Subscription", "${sub.name}: ${outcome.total} configs")
             val suffix = if (!outcome.isFirstLoad && outcome.newCount > 0) ", ${outcome.newCount} new" else ""
-            _messages.tryEmit("${sub.name}: ${outcome.total} configs updated$suffix")
+            val usageNote = outcome.usage?.let { usage ->
+                when {
+                    usage.isExpired() -> ", expired"
+                    usage.isExpiringSoon() -> {
+                        val days = usage.daysLeft()
+                        if (days <= 0L) ", expires today" else ", expires in ${days}d"
+                    }
+                    usage.isLowData() -> ", ${(usage.fractionUsed() * 100).toInt().coerceIn(0, 100)}% used"
+                    else -> ""
+                }
+            }.orEmpty()
+            _messages.tryEmit("${sub.name}: ${outcome.total} configs updated$suffix$usageNote")
             if (!outcome.isFirstLoad && outcome.newCount > 0) {
                 VpnNotification.showSubscriptionUpdate(getApplication(), sub.name, outcome.newCount)
             }

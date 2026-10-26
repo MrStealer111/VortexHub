@@ -17,6 +17,7 @@ object VpnNotification {
     const val NOTIF_ID = 1001
     const val ALERT_NOTIF_ID = 1002
     const val SUB_NOTIF_ID = 1003
+    const val SUB_ALERT_NOTIF_ID = 1004
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -40,7 +41,7 @@ object VpnNotification {
             if (mgr.getNotificationChannel(SUB_CHANNEL_ID) == null) {
                 mgr.createNotificationChannel(
                     NotificationChannel(SUB_CHANNEL_ID, "Subscription Updates", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                        description = "Notifies when new configs are added to a subscription"
+                        description = "New configs, low data and expiry alerts for subscriptions"
                         setShowBadge(true)
                     }
                 )
@@ -149,6 +150,23 @@ object VpnNotification {
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .build()
         (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(SUB_NOTIF_ID, notif)
+    }
+
+    fun showSubscriptionAlert(context: Context, title: String, message: String) {
+        ensureChannel(context)
+        val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+        val pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val notif = NotificationCompat.Builder(context, SUB_CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pi)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .build()
+        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(SUB_ALERT_NOTIF_ID, notif)
     }
 
     private fun format(bytes: Long): String {

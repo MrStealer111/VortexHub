@@ -17,7 +17,14 @@
 -optimizationpasses 5
 
 # Strip logs
--assumenosideeffects class android.util.Log { *; }
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+    public static int wtf(...);
+}
 
 # Crypto
 -keep class androidx.security.crypto.** { *; }
