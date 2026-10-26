@@ -283,6 +283,15 @@ class TunnelStore(private val context: Context) {
         }
     }
 
+    suspend fun renameSubscription(id: String, name: String) {
+        context.dataStore.edit { prefs ->
+            val subscriptions = prefs[Keys.SUBSCRIPTIONS].orEmpty().toSubscriptions().map {
+                if (it.id == id) it.copy(name = name) else it
+            }
+            prefs[Keys.SUBSCRIPTIONS] = subscriptions.toSubscriptionsJson()
+        }
+    }
+
     suspend fun replaceSubscriptionProfiles(
         subscriptionId: String,
         entries: List<SubscriptionParser.Entry>,

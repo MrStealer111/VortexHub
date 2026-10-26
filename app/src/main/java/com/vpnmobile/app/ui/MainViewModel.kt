@@ -386,6 +386,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun refreshOne(sub: Subscription) {
+        viewModelScope.launch { refreshSubscription(sub) }
+    }
+
     private suspend fun refreshSubscription(sub: Subscription) {
         _subscriptionRefreshing.update { it + sub.id }
         try {
@@ -410,6 +414,63 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             store.removeSubscription(sub.id)
             _messages.tryEmit("${sub.name} removed")
+        }
+    }
+
+    fun exportSubscriptions(): String {
+        val arr = org.json.JSONArray()
+        subscriptions.value.forEach { sub ->
+            arr.put(org.json.JSONObject().put("name", sub.name).put("url", sub.url))
+        }
+        return arr.toString()
+    }
+
+    fun importSubscriptions(json: String) {
+        viewModelScope.launch {
+            var added = 0
+            try {
+                val arr = org.json.JSONArray(json)
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    val url = obj.optString("url").trim()
+                    val name = obj.optString("name").trim()
+                    if (url.startsWith("https://")) {
+                        try {
+                            store.addSubscription(if (name.isBlank()) subscriptionHost(url) else name, url)
+                            added++
+                        } catch (_: Exception) {}
+                    }
+                }
+                _messages.tryEmit("Imported $added subscription(s)")
+            } catch (e: Exception) {
+                _messages.tryEmit("Import failed: ${e.message}")
+            }
+        }
+    }
+
+    fun cleanDeadSubscriptionConfigs() {
+        viewModelScope.launch {
+            val subs = subscriptions.value
+            if (subs.isEmpty()) { _messages.tryEmit("No subscriptions"); return@launch }
+            var removed = 0
+            subs.forEach { sub ->
+                val configs = profiles.value.filter { it.subscriptionId == sub.id }
+                configs.forEach { profile ->
+                    val result = runCatching { PingTester.ping(profile.configText) }.getOrNull()
+                    if (result == null || !result.success) {
+                        store.deleteProfile(profile.id)
+                        removed++
+                    }
+                }
+            }
+            _messages.tryEmit("Removed $removed dead config(s)")
+        }
+    }
+
+    fun renameSubscription(sub: Subscription, name: String) {
+        viewModelScope.launch {
+            store.renameSubscription(sub.id, name.trim())
+            _messages.tryEmit("${sub.name} renamed")
         }
     }
 

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.rounded.Add
@@ -69,12 +70,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vpnmobile.app.data.PingTester
 import com.vpnmobile.app.data.ServerApi
+import com.vpnmobile.app.data.Subscription
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
 import com.vpnmobile.app.ui.components.ProfileAvatar
@@ -130,6 +133,8 @@ fun ServersScreen(
     var showAddSub by remember { mutableStateOf(false) }
     var subUrl by remember { mutableStateOf("") }
     var subName by remember { mutableStateOf("") }
+    var renameSub by remember { mutableStateOf<Subscription?>(null) }
+    var renameName by remember { mutableStateOf("") }
     var qrProfile by remember { mutableStateOf<TunnelProfile?>(null) }
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
@@ -171,6 +176,10 @@ fun ServersScreen(
                         DropdownMenuItem(text = { Text("Scan config from QR Code", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; (onQrScan ?: onImport).invoke() })
                         HorizontalDivider(color = AppTheme.colors.surfaceVariant)
                         DropdownMenuItem(text = { Text("Update Subs", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; viewModel.refreshSubscriptions(); refreshTick++ })
+                        HorizontalDivider(color = AppTheme.colors.surfaceVariant)
+                        DropdownMenuItem(text = { Text("Export subscriptions", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; clipboard.setText(AnnotatedString(viewModel.exportSubscriptions())); android.widget.Toast.makeText(context, "Copied", android.widget.Toast.LENGTH_SHORT).show() })
+                        HorizontalDivider(color = AppTheme.colors.surfaceVariant)
+                        DropdownMenuItem(text = { Text("Import subscriptions", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; val clip = clipboard.getText()?.text?.trim().orEmpty(); if (clip.isNotBlank()) viewModel.importSubscriptions(clip) })
                         HorizontalDivider(color = AppTheme.colors.surfaceVariant)
                         DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = AppTheme.colors.text, fontSize = 13.sp); Icon(if (showManualSub) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, Modifier.size(16.dp), AppTheme.colors.text) } }, onClick = { showManualSub = !showManualSub })
                         if (showManualSub) {
@@ -421,6 +430,18 @@ fun ServersScreen(
                             }
                         }
                     }
+                    item {
+                        Card(
+                            onClick = { viewModel.cleanDeadSubscriptionConfigs() },
+                            shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
+                        ) {
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Delete, null, Modifier.size(15.dp), Gray)
+                                Spacer(Modifier.width(5.dp))
+                                Text("Clean dead configs", color = Gray, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                     items(subscriptions.filter { query.isBlank() || it.name.contains(query, true) || it.url.contains(query, true) }, key = { it.id }) { sub ->
                         val count = profiles.count { it.subscriptionId == sub.id }
                         val isRefreshing = sub.id in subscriptionRefreshing
@@ -436,8 +457,9 @@ fun ServersScreen(
                                 if (isRefreshing) {
                                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Orange)
                                 } else {
-                                    Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp).padding(horizontal = 10.dp).clickable { viewModel.refreshSubscriptions() }, Orange)
+                                    Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp).padding(horizontal = 6.dp).clickable { viewModel.refreshOne(sub) }, Orange)
                                 }
+                                Icon(Icons.Filled.Edit, null, tint = Gray, modifier = Modifier.size(18.dp).padding(horizontal = 6.dp).clickable { renameSub = sub; renameName = sub.name })
                                 Icon(Icons.Filled.Delete, null, tint = Gray, modifier = Modifier.size(18.dp).clickable { viewModel.removeSubscription(sub) })
                             }
                         }
@@ -520,6 +542,35 @@ fun ServersScreen(
 
     qrProfile?.let { profile ->
         QrShareDialog(profile = profile, onDismiss = { qrProfile = null }, hideKeys = hideKeys)
+    }
+
+    renameSub?.let { sub ->
+        AlertDialog(
+            onDismissRequest = { renameSub = null },
+            containerColor = Color(0xFF1C1C1E),
+            title = { Text("Rename subscription", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = {
+                OutlinedTextField(
+                    value = renameName,
+                    onValueChange = { renameName = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = renameName.trim().isNotBlank(),
+                    onClick = {
+                        viewModel.renameSubscription(sub, renameName)
+                        renameSub = null
+                    },
+                ) { Text("Save", color = Orange, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { renameSub = null }) { Text("Cancel", color = Gray) }
+            },
+        )
     }
 
     if (showAddSub) {
