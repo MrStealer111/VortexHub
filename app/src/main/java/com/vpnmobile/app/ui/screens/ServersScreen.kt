@@ -118,8 +118,10 @@ fun ServersScreen(
     val subscriptionRefreshing by viewModel.subscriptionRefreshing.collectAsStateWithLifecycle()
     val findingFastest by viewModel.findingFastest.collectAsStateWithLifecycle()
     val hideKeys by viewModel.hideKeys.collectAsStateWithLifecycle()
+    val autoSortByLatency by viewModel.autoSortByLatency.collectAsStateWithLifecycle()
     var tab by remember { mutableStateOf("Free") }
-    var sortByPing by remember { mutableStateOf(false) }
+    var sortByPing by remember { mutableStateOf(autoSortByLatency) }
+    LaunchedEffect(autoSortByLatency) { sortByPing = autoSortByLatency }
     var query by remember { mutableStateOf("") }
     var countryFilter by remember { mutableStateOf<String?>(null) }
 

@@ -265,6 +265,7 @@ class VpnConnectionManager(private val context: Context) {
                 it.copy(state = VpnState.BLOCKED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
             }
             VpnNotification.show(appContext, profile.name, 0, 0, false, blocked = true)
+            VpnNotification.showKillSwitchAlert(appContext, profile.name)
             startShadowsocksStatsPolling(profile.name)
             Diagnostics.log(TAG, "Shadowsocks blocked by kill switch")
             return

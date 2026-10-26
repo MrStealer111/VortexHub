@@ -37,6 +37,7 @@ class TunnelStore(private val context: Context) {
         val HIDE_KEYS = booleanPreferencesKey("hide_keys")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
+        val AUTO_SORT_LATENCY = booleanPreferencesKey("auto_sort_latency")
         val LANGUAGE = stringPreferencesKey("language")
     }
 
@@ -108,6 +109,9 @@ class TunnelStore(private val context: Context) {
 
     val accentColor: Flow<String> = context.dataStore.data
         .map { prefs -> prefs[Keys.ACCENT_COLOR] ?: "orange" }
+
+    val autoSortByLatency: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[Keys.AUTO_SORT_LATENCY] ?: false }
 
     val language: Flow<String> = context.dataStore.data
         .map { prefs -> prefs[Keys.LANGUAGE] ?: "system" }
@@ -206,6 +210,10 @@ class TunnelStore(private val context: Context) {
 
     suspend fun setAccentColor(color: String) {
         context.dataStore.edit { prefs -> prefs[Keys.ACCENT_COLOR] = color }
+    }
+
+    suspend fun setAutoSortByLatency(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[Keys.AUTO_SORT_LATENCY] = enabled }
     }
 
     suspend fun setLanguage(language: String) {

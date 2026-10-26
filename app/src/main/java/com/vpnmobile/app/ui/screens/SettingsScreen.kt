@@ -82,6 +82,7 @@ fun SettingsScreen(
     val hideKeys by viewModel.hideKeys.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val accentColor by viewModel.accentColor.collectAsStateWithLifecycle()
+    val autoSortByLatency by viewModel.autoSortByLatency.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -247,6 +248,15 @@ fun SettingsScreen(
             subtitle = "Route IPv6 into the tunnel to prevent leaks",
             checked = blockIpv6,
             onCheckedChange = { viewModel.setBlockIpv6(it) }
+        )
+
+        DividerLine()
+
+        SettingsToggleRow(
+            title = "Auto-sort by latency",
+            subtitle = "Sort servers by lowest ping automatically",
+            checked = autoSortByLatency,
+            onCheckedChange = { viewModel.setAutoSortByLatency(it) }
         )
 
         Spacer(Modifier.height(16.dp))

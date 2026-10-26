@@ -85,6 +85,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val accentColor: StateFlow<String> =
         store.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, "orange")
 
+    val autoSortByLatency: StateFlow<Boolean> =
+        store.autoSortByLatency.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     val language: StateFlow<String> =
         store.language.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
 
@@ -304,6 +307,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setAccentColor(color: String) {
         viewModelScope.launch { store.setAccentColor(color) }
+    }
+
+    fun setAutoSortByLatency(enabled: Boolean) {
+        viewModelScope.launch { store.setAutoSortByLatency(enabled) }
     }
 
     fun setLanguage(language: String) {
