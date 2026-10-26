@@ -1,4 +1,6 @@
-ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@203.0.113.10:8388#Tokyo%2001
-ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@203.0.113.11:8388#Singapore%2002
-ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@203.0.113.12:8388#Frankfurt%2003
-ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@203.0.113.13:8388#New%20York%2004
+# Demo subscription used only for UI preview screenshots.
+# Endpoints are public DNS resolvers; not real proxy servers.
+ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@1.1.1.1:443#Tokyo%2001
+ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@8.8.8.8:443#Singapore%2002
+ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@9.9.9.9:443#Frankfurt%2003
+ss://YWVzLTI1Ni1nY206ZGVtby1wYXNzd29yZA==@1.0.0.1:443#New%20York%2004
