@@ -83,6 +83,7 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val accentColor by viewModel.accentColor.collectAsStateWithLifecycle()
     val autoSortByLatency by viewModel.autoSortByLatency.collectAsStateWithLifecycle()
+    val autoRefreshInterval by viewModel.autoRefreshInterval.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -258,6 +259,29 @@ fun SettingsScreen(
             checked = autoSortByLatency,
             onCheckedChange = { viewModel.setAutoSortByLatency(it) }
         )
+
+        DividerLine()
+
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Text("Auto-refresh subscriptions", color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(2.dp))
+            Text("Update configs in the background", color = AppTheme.colors.textSecondary, fontSize = 11.sp)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("off" to "Off", "6" to "6h", "12" to "12h", "24" to "24h").forEach { (value, label) ->
+                    FilterChip(
+                        selected = autoRefreshInterval == value,
+                        onClick = { viewModel.setAutoRefreshInterval(value) },
+                        label = { Text(label, fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Orange.copy(alpha = 0.18f),
+                            selectedLabelColor = Orange,
+                            labelColor = Gray,
+                        ),
+                    )
+                }
+            }
+        }
 
         Spacer(Modifier.height(16.dp))
 

@@ -39,6 +39,7 @@ class TunnelStore(private val context: Context) {
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
         val AUTO_SORT_LATENCY = booleanPreferencesKey("auto_sort_latency")
         val LANGUAGE = stringPreferencesKey("language")
+        val AUTO_REFRESH_INTERVAL = stringPreferencesKey("auto_refresh_interval")
     }
 
     val profiles: Flow<List<TunnelProfile>> = context.dataStore.data
@@ -115,6 +116,9 @@ class TunnelStore(private val context: Context) {
 
     val language: Flow<String> = context.dataStore.data
         .map { prefs -> prefs[Keys.LANGUAGE] ?: "system" }
+
+    val autoRefreshInterval: Flow<String> = context.dataStore.data
+        .map { prefs -> prefs[Keys.AUTO_REFRESH_INTERVAL] ?: "off" }
 
     suspend fun addProfile(
         name: String,
@@ -214,6 +218,10 @@ class TunnelStore(private val context: Context) {
 
     suspend fun setAutoSortByLatency(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[Keys.AUTO_SORT_LATENCY] = enabled }
+    }
+
+    suspend fun setAutoRefreshInterval(interval: String) {
+        context.dataStore.edit { it[Keys.AUTO_REFRESH_INTERVAL] = interval }
     }
 
     suspend fun setLanguage(language: String) {

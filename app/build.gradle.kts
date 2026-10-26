@@ -97,6 +97,7 @@ dependencies {
     implementation(libs.billing.ktx)
     implementation(libs.zxing.core)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(files("libs/tun2socks.aar"))
 
     testImplementation("junit:junit:4.13.2")

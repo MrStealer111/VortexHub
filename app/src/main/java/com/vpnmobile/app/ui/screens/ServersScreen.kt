@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ExpandLess
@@ -122,11 +123,14 @@ fun ServersScreen(
     val findingFastest by viewModel.findingFastest.collectAsStateWithLifecycle()
     val hideKeys by viewModel.hideKeys.collectAsStateWithLifecycle()
     val autoSortByLatency by viewModel.autoSortByLatency.collectAsStateWithLifecycle()
+    val subHealth by viewModel.subHealth.collectAsStateWithLifecycle()
+    val healthChecking by viewModel.healthChecking.collectAsStateWithLifecycle()
     var tab by remember { mutableStateOf("Free") }
     var sortByPing by remember { mutableStateOf(autoSortByLatency) }
     LaunchedEffect(autoSortByLatency) { sortByPing = autoSortByLatency }
     var query by remember { mutableStateOf("") }
     var countryFilter by remember { mutableStateOf<String?>(null) }
+    var subFilter by remember { mutableStateOf<String?>(null) }
 
     var showPlusMenu by remember { mutableStateOf(false) }
     var showManualSub by remember { mutableStateOf(false) }
@@ -442,6 +446,19 @@ fun ServersScreen(
                             }
                         }
                     }
+                    item {
+                        Card(
+                            onClick = { viewModel.checkSubscriptionHealth() },
+                            shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = CardBg), border = BorderStroke(1.dp, Border)
+                        ) {
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                if (healthChecking) CircularProgressIndicator(Modifier.size(15.dp), strokeWidth = 2.dp, color = AppTheme.colors.success)
+                                else Icon(Icons.Rounded.CheckCircle, null, Modifier.size(15.dp), AppTheme.colors.success)
+                                Spacer(Modifier.width(5.dp))
+                                Text(if (healthChecking) "Checking health..." else "Health check", color = AppTheme.colors.success, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                     items(subscriptions.filter { query.isBlank() || it.name.contains(query, true) || it.url.contains(query, true) }, key = { it.id }) { sub ->
                         val count = profiles.count { it.subscriptionId == sub.id }
                         val isRefreshing = sub.id in subscriptionRefreshing
@@ -451,7 +468,9 @@ fun ServersScreen(
                             Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text(sub.name, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                    Text("$count configs · ${updatedLabel(sub.lastUpdated)}", color = Gray, fontSize = 11.sp)
+                                    val health = subHealth[sub.id]
+                                    val healthText = if (health != null) " · ${health.healthy}/${health.total} healthy" else ""
+                                    Text("$count configs · ${updatedLabel(sub.lastUpdated)}$healthText", color = if (health != null && health.healthy < health.total) Color(0xFFFFAB00) else Gray, fontSize = 11.sp)
                                     Text(subscriptionHost(sub.url), color = AppTheme.colors.textSecondary.copy(alpha = 0.7f), fontSize = 10.sp, maxLines = 1)
                                 }
                                 if (isRefreshing) {
@@ -479,12 +498,45 @@ fun ServersScreen(
                 val filteredProfiles = profiles
                     .filter { query.isBlank() || it.name.contains(query, true) || it.flag.contains(query, true) }
                     .filter { countryFilter == null || it.flag == countryFilter }
+                    .filter { subFilter == null || it.subscriptionId == subFilter }
                 val sortedProfiles = if (sortByPing) {
                     filteredProfiles.sortedBy { pingResults[it.id]?.takeIf { r -> r.success }?.ms ?: Int.MAX_VALUE }
                 } else {
                     filteredProfiles.sortedByDescending { it.createdAt }
                 }
                 LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (subscriptions.isNotEmpty()) {
+                        item {
+                            Row(
+                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                FilterChip(
+                                    selected = subFilter == null,
+                                    onClick = { subFilter = null },
+                                    label = { Text("All", fontSize = 11.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Orange.copy(alpha = 0.18f),
+                                        selectedLabelColor = Orange,
+                                        labelColor = Gray,
+                                    ),
+                                )
+                                subscriptions.forEach { sub ->
+                                    FilterChip(
+                                        selected = subFilter == sub.id,
+                                        onClick = { subFilter = if (subFilter == sub.id) null else sub.id },
+                                        label = { Text(sub.name, fontSize = 11.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Orange.copy(alpha = 0.18f),
+                                            selectedLabelColor = Orange,
+                                            labelColor = Gray,
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+                    }
                     item {
                         Card(
                             onClick = {

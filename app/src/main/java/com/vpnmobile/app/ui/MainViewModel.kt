@@ -9,8 +9,11 @@ import com.vpnmobile.app.data.PingTester
 import com.vpnmobile.app.data.Subscription
 import com.vpnmobile.app.data.SubscriptionFetcher
 import com.vpnmobile.app.data.SubscriptionParser
+import com.vpnmobile.app.data.SubscriptionRefresher
+import com.vpnmobile.app.work.SubscriptionRefreshScheduler
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.util.Diagnostics
+import com.vpnmobile.app.vpn.VpnNotification
 import com.vpnmobile.app.vpn.VpnState
 import com.wireguard.android.backend.BackendException
 import kotlinx.coroutines.Dispatchers
@@ -90,6 +93,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val language: StateFlow<String> =
         store.language.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
+
+    val autoRefreshInterval: StateFlow<String> =
+        store.autoRefreshInterval.stateIn(viewModelScope, SharingStarted.Eagerly, "off")
 
     val favorites: StateFlow<Set<String>> =
         store.favorites.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
@@ -309,6 +315,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { store.setAccentColor(color) }
     }
 
+    fun setAutoRefreshInterval(interval: String) {
+        viewModelScope.launch {
+            store.setAutoRefreshInterval(interval)
+            SubscriptionRefreshScheduler.sync(getApplication(), interval)
+            _messages.tryEmit(if (interval == "off") "Auto-refresh off" else "Auto-refresh every ${interval}h")
+        }
+    }
+
+    private val _subHealth = MutableStateFlow<Map<String, SubHealth>>(emptyMap())
+    val subHealth: StateFlow<Map<String, SubHealth>> = _subHealth
+    private val _healthChecking = MutableStateFlow(false)
+    val healthChecking: StateFlow<Boolean> = _healthChecking
+
+    fun checkSubscriptionHealth() {
+        if (_healthChecking.value) return
+        viewModelScope.launch {
+            _healthChecking.value = true
+            val result = mutableMapOf<String, SubHealth>()
+            subscriptions.value.forEach { sub ->
+                val configs = profiles.value.filter { it.subscriptionId == sub.id }
+                var healthy = 0
+                configs.forEach { p ->
+                    val r = runCatching { PingTester.ping(p.configText) }.getOrNull()
+                    if (r?.success == true) healthy++
+                }
+                result[sub.id] = SubHealth(healthy, configs.size)
+            }
+            _subHealth.value = result
+            _healthChecking.value = false
+        }
+    }
+
+    data class SubHealth(val healthy: Int, val total: Int)
+
     fun setAutoSortByLatency(enabled: Boolean) {
         viewModelScope.launch { store.setAutoSortByLatency(enabled) }
     }
@@ -393,15 +433,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun refreshSubscription(sub: Subscription) {
         _subscriptionRefreshing.update { it + sub.id }
         try {
-            val payload = SubscriptionFetcher.fetch(sub.url)
-            val entries = SubscriptionParser.parse(payload, sub.name)
-            if (entries.isEmpty()) {
+            val outcome = SubscriptionRefresher.refresh(store, sub)
+            if (outcome.total == 0) {
                 _messages.tryEmit("${sub.name}: no supported configs found")
                 return
             }
-            store.replaceSubscriptionProfiles(sub.id, entries)
-            Diagnostics.log("Subscription", "${sub.name}: ${entries.size} configs")
-            _messages.tryEmit("${sub.name}: ${entries.size} configs updated")
+            Diagnostics.log("Subscription", "${sub.name}: ${outcome.total} configs")
+            val suffix = if (!outcome.isFirstLoad && outcome.newCount > 0) ", ${outcome.newCount} new" else ""
+            _messages.tryEmit("${sub.name}: ${outcome.total} configs updated$suffix")
+            if (!outcome.isFirstLoad && outcome.newCount > 0) {
+                VpnNotification.showSubscriptionUpdate(getApplication(), sub.name, outcome.newCount)
+            }
         } catch (e: Exception) {
             Diagnostics.log("Subscription", e)
             _messages.tryEmit("${sub.name}: ${e.message ?: "update failed"}")

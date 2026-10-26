@@ -13,8 +13,10 @@ import com.vpnmobile.app.R
 object VpnNotification {
     private const val CHANNEL_ID = "vpn_status"
     private const val ALERT_CHANNEL_ID = "vpn_alerts"
+    private const val SUB_CHANNEL_ID = "sub_updates"
     const val NOTIF_ID = 1001
     const val ALERT_NOTIF_ID = 1002
+    const val SUB_NOTIF_ID = 1003
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -31,6 +33,14 @@ object VpnNotification {
                 mgr.createNotificationChannel(
                     NotificationChannel(ALERT_CHANNEL_ID, "VPN Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
                         description = "Alerts when the VPN tunnel drops or kill switch activates"
+                        setShowBadge(true)
+                    }
+                )
+            }
+            if (mgr.getNotificationChannel(SUB_CHANNEL_ID) == null) {
+                mgr.createNotificationChannel(
+                    NotificationChannel(SUB_CHANNEL_ID, "Subscription Updates", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                        description = "Notifies when new configs are added to a subscription"
                         setShowBadge(true)
                     }
                 )
@@ -123,6 +133,22 @@ object VpnNotification {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .build()
         (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(ALERT_NOTIF_ID, notif)
+    }
+
+    fun showSubscriptionUpdate(context: Context, subName: String, newCount: Int) {
+        ensureChannel(context)
+        val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+        val pi = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val notif = NotificationCompat.Builder(context, SUB_CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("New servers in $subName")
+            .setContentText("$newCount new config(s) added to your subscription.")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pi)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .build()
+        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(SUB_NOTIF_ID, notif)
     }
 
     private fun format(bytes: Long): String {
