@@ -1,6 +1,8 @@
 package com.vpnmobile.app.data
 
 import java.util.Locale
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 object ConfigTools {
 
@@ -23,6 +25,38 @@ object ConfigTools {
     fun isAutoWarp(configText: String): Boolean {
         val t = configText.trim()
         return t.equals("warp://auto", true) || t.equals("warp://", true)
+    }
+
+    /**
+     * Accepts a WireGuard INI config, or decodes a `wireguard://` link whose payload is a
+     * base64/URL-encoded INI document. Returns null when the payload is not a WireGuard config.
+     */
+    @OptIn(ExperimentalEncodingApi::class)
+    fun normalizeWireGuard(configText: String): String? {
+        val t = configText.trim()
+        if (t.contains("[Interface]", ignoreCase = true)) return t
+        if (!t.startsWith("wireguard://", ignoreCase = true)) return null
+        val payload = t.substringAfter("://")
+        val normalized = payload.trim().replace('-', '+').replace('_', '/').replace(Regex("\\s+"), "")
+        val padded = when (normalized.length % 4) {
+            2 -> "$normalized=="
+            3 -> "$normalized="
+            0 -> normalized
+            else -> null
+        }
+        if (padded != null) {
+            try {
+                val decoded = Base64.decode(padded).toString(Charsets.UTF_8)
+                if (decoded.contains("[Interface]", ignoreCase = true)) return decoded
+            } catch (_: Exception) {
+            }
+        }
+        val urlDecoded = try {
+            java.net.URLDecoder.decode(payload, "UTF-8")
+        } catch (_: Exception) {
+            payload
+        }
+        return urlDecoded.takeIf { it.contains("[Interface]", ignoreCase = true) }
     }
 
     fun parseEndpoint(configText: String): Pair<String, Int>? {

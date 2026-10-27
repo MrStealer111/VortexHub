@@ -159,6 +159,7 @@ fun VpnApp(
                     ImportScreen(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
+                        onConnect = onConnect,
                         onWarpGenerate = { navController.navigate(Routes.WARP_GEN) },
                     )
                 }
@@ -203,7 +204,12 @@ fun VpnApp(
                 enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(260)) { it / 5 } },
                 exitTransition = { fadeOut(tween(260)) + slideOutHorizontally(tween(260)) { -it / 5 } },
             ) {
-                    QrScanScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onScanned = { navController.popBackStack() })
+                    QrScanScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onScanned = { navController.popBackStack() },
+                        onConnect = onConnect,
+                    )
                 }
                 composable(
                 Routes.PREMIUM,

@@ -147,7 +147,10 @@ class TunnelStore(private val context: Context) {
         context.dataStore.edit { prefs ->
             val current = prefs[Keys.PROFILES].orEmpty().toProfiles().filterNot { it.id == id }
             prefs[Keys.PROFILES] = current.toJson()
-            if (prefs[Keys.SELECTED_PROFILE] == id) prefs.remove(Keys.SELECTED_PROFILE)
+            if (prefs[Keys.SELECTED_PROFILE] == id) {
+                val next = current.maxByOrNull { it.createdAt }
+                if (next != null) prefs[Keys.SELECTED_PROFILE] = next.id else prefs.remove(Keys.SELECTED_PROFILE)
+            }
         }
     }
 

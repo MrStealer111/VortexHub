@@ -89,14 +89,12 @@ object WarpGenerator {
         val v4 = cfg.optString("v4", "172.16.0.2/32")
         val v6 = cfg.optString("v6", "")
         val addrStr = if (v6.isNotBlank()) "$v4, $v6" else v4
-        val reserved = (0..2).map { (0..255).random() }.joinToString(", ")
         val dns = customDns.ifBlank { "1.1.1.1, 1.0.0.1" }
         val conf = buildString {
             appendLine("[Interface]")
             appendLine("PrivateKey = $privB64")
             appendLine("Address = $addrStr")
             appendLine("DNS = $dns")
-            appendLine("Reserved = $reserved")
             appendLine()
             appendLine("[Peer]")
             appendLine("PublicKey = $CF_PEER_PUBLIC")

@@ -44,13 +44,20 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vpnmobile.app.data.ConfigTools
 import com.vpnmobile.app.data.ShadowsocksUri
+import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
 import com.vpnmobile.app.ui.effects.GlassPrimaryButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (() -> Unit)? = null) {
+fun ImportScreen(
+    viewModel: MainViewModel,
+    onBack: () -> Unit,
+    onConnect: (TunnelProfile) -> Unit,
+    onWarpGenerate: (() -> Unit)? = null,
+) {
     var protocol by remember { mutableStateOf("WireGuard") }
     var name by remember { mutableStateOf("") }
     var uri by remember { mutableStateOf("") }
@@ -61,7 +68,7 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
         if (t.isBlank()) return null
         return when (protocol) {
             "WARP" -> if (!t.startsWith("warp://")) "WARP config must start with warp://" else null
-            "WireGuard" -> if (!t.startsWith("wireguard://") && !t.contains("[Interface]")) "WireGuard config must contain [Interface] or start with wireguard://" else null
+            "WireGuard" -> if (ConfigTools.normalizeWireGuard(t) == null) "Invalid WireGuard config — paste [Interface] text or a base64 wireguard:// link" else null
             "Shadowsocks" -> if (ShadowsocksUri.parse(t) == null) "Invalid Shadowsocks link — expected ss://method:password@host:port" else null
             else -> null
         }
@@ -160,8 +167,15 @@ fun ImportScreen(viewModel: MainViewModel, onBack: () -> Unit, onWarpGenerate: (
                         "Shadowsocks" -> "🔒"
                         else -> "⚡"
                     }
-                    viewModel.addProfile(name.trim(), flag, uri.trim())
-                    onBack()
+                    val configText = if (protocol == "WireGuard") {
+                        ConfigTools.normalizeWireGuard(uri.trim()) ?: uri.trim()
+                    } else {
+                        uri.trim()
+                    }
+                    viewModel.addProfile(name.trim(), flag, configText) { profile ->
+                        onConnect(profile)
+                        onBack()
+                    }
                 },
                 enabled = canSave, modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text("Save & Connect", color = AppTheme.colors.text, fontWeight = FontWeight.Black, fontSize = 15.sp) }

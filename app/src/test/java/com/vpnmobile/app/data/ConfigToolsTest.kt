@@ -1,8 +1,10 @@
 package com.vpnmobile.app.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Base64
 
 class ConfigToolsTest {
 
@@ -40,6 +42,32 @@ class ConfigToolsTest {
         val result = ConfigTools.applyIpv6Block(config)
         assertTrue(result.contains("::/0"))
         assertEquals(1, Regex("::/0").findAll(result).count())
+    }
+
+    @Test
+    fun normalizesPlainWireGuardConfig() {
+        val config = "[Interface]\nPrivateKey = abc\n[Peer]\nPublicKey = def"
+        assertEquals(config, ConfigTools.normalizeWireGuard(config))
+    }
+
+    @Test
+    fun decodesBase64WireGuardLink() {
+        val config = "[Interface]\nPrivateKey = abc\n[Peer]\nPublicKey = def\nEndpoint = 1.2.3.4:51820"
+        val encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(config.toByteArray())
+        assertEquals(config, ConfigTools.normalizeWireGuard("wireguard://$encoded"))
+    }
+
+    @Test
+    fun decodesUrlEncodedWireGuardLink() {
+        val config = "[Interface]\nPrivateKey = abc\n[Peer]\nPublicKey = def"
+        val encoded = java.net.URLEncoder.encode(config, "UTF-8")
+        assertEquals(config, ConfigTools.normalizeWireGuard("wireguard://$encoded"))
+    }
+
+    @Test
+    fun rejectsNonWireGuardLinks() {
+        assertNull(ConfigTools.normalizeWireGuard("ss://abc@1.2.3.4:443"))
+        assertNull(ConfigTools.normalizeWireGuard("wireguard://not-a-config"))
     }
 
     @Test

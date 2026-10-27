@@ -50,6 +50,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import com.vpnmobile.app.data.ConfigTools
+import com.vpnmobile.app.data.ShadowsocksUri
+import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
 import java.util.concurrent.Executors
 
@@ -59,9 +62,36 @@ private fun ImageProxy.asInputImage(): InputImage? {
     return InputImage.fromMediaImage(mediaImage, imageInfo.rotationDegrees)
 }
 
+private fun qrError(raw: String): String? {
+    val t = raw.trim()
+    return when {
+        t.isBlank() -> "Empty QR code"
+        t.equals("warp://auto", true) || t.equals("warp://", true) -> null
+        t.startsWith("ss://", true) ->
+            if (ShadowsocksUri.parse(t) == null) "Invalid Shadowsocks link" else null
+        t.startsWith("wireguard://", true) ->
+            if (ConfigTools.normalizeWireGuard(t) == null) "Invalid WireGuard link" else null
+        t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true) ->
+            "VLESS/VMess/Trojan is not supported in this build"
+        else -> "Unsupported QR code — expected ss://, wireguard:// or warp://"
+    }
+}
+
+private fun qrName(raw: String): String = when {
+    raw.startsWith("ss://", true) ->
+        ShadowsocksUri.parse(raw.trim())?.name?.takeIf { it.isNotBlank() } ?: "QR Import"
+    raw.startsWith("wireguard://", true) -> "WireGuard (QR)"
+    else -> "WARP (QR)"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QrScanScreen(viewModel: MainViewModel, onBack: () -> Unit, onScanned: (String) -> Unit) {
+fun QrScanScreen(
+    viewModel: MainViewModel,
+    onBack: () -> Unit,
+    onScanned: (String) -> Unit,
+    onConnect: (TunnelProfile) -> Unit,
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var hasCamPermission by remember { mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) }
@@ -103,14 +133,28 @@ fun QrScanScreen(viewModel: MainViewModel, onBack: () -> Unit, onScanned: (Strin
                                         if (image != null) {
                                             scanner.process(image).addOnSuccessListener { barcodes ->
                                                 for (b in barcodes) {
-                                                    val raw = b.rawValue ?: continue
-                                                    if (raw.startsWith("ss://") || raw.startsWith("vless://") || raw.startsWith("vmess://") || raw.startsWith("trojan://") || raw.contains("://")) {
-                                                        if (lastScanned != raw) {
-                                                            lastScanned = raw
-                                                            viewModel.addProfile("QR Import", "📷", raw)
-                                                            onScanned(raw)
-                                                        }
+                                                    val raw = b.rawValue?.trim() ?: continue
+                                                    if (lastScanned == raw) continue
+                                                    lastScanned = raw
+                                                    val error = qrError(raw)
+                                                    if (error != null) {
+                                                        viewModel.showMessage(error)
+                                                        continue
                                                     }
+                                                    val flag = when {
+                                                        raw.startsWith("ss://", true) -> "🔒"
+                                                        raw.startsWith("wireguard://", true) -> "⚡"
+                                                        else -> "🌐"
+                                                    }
+                                                    val configText = if (raw.startsWith("wireguard://", true)) {
+                                                        ConfigTools.normalizeWireGuard(raw) ?: raw
+                                                    } else {
+                                                        raw
+                                                    }
+                                                    viewModel.addProfile(qrName(raw), flag, configText) { profile ->
+                                                        onConnect(profile)
+                                                    }
+                                                    onScanned(raw)
                                                 }
                                             }.addOnCompleteListener { imageProxy.close() }
                                         } else imageProxy.close()

@@ -35,6 +35,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
 
+private const val FREE_PROFILE_PREFIX = "free-"
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val container = (application as VpnApplication).container
@@ -116,7 +118,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         store.profiles,
         store.selectedProfileId,
     ) { list, selectedId ->
-        list.firstOrNull { it.id == selectedId } ?: list.lastOrNull()
+        list.firstOrNull { it.id == selectedId }
+            ?: list.firstOrNull { !it.configText.trim().equals("warp://auto", true) }
+            ?: list.firstOrNull()
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _freeSelected = MutableStateFlow<TunnelProfile?>(null)
@@ -129,8 +133,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         connect(profile)
     }
 
-    val connectedProfile: StateFlow<TunnelProfile?> = combine(profiles, status) { list, current ->
+    val connectedProfile: StateFlow<TunnelProfile?> = combine(profiles, status, _freeSelected) { list, current, free ->
         list.firstOrNull { it.id == current.profileId }
+            ?: free?.takeIf { it.id == current.profileId }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val backendVersion: StateFlow<String?> = flow { emit(vpn.version()) }
@@ -141,6 +146,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val messages: SharedFlow<String> = _messages
+
+    fun showMessage(message: String) {
+        _messages.tryEmit(message)
+    }
 
     private val _needPremium = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val needPremium: SharedFlow<Unit> = _needPremium
@@ -161,13 +170,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 savedProfiles = store.profiles.first()
             }
             val autoConnectEnabled = store.autoConnect.first()
-            if (autoConnectEnabled && savedProfiles.isNotEmpty() && vpn.status.value.state == VpnState.DISCONNECTED) {
-                connect(savedProfiles.first())
+            val selectedId = store.selectedProfileId.first()
+            val target = savedProfiles.firstOrNull { it.id == selectedId } ?: savedProfiles.firstOrNull()
+            if (autoConnectEnabled && target != null && vpn.status.value.state == VpnState.DISCONNECTED) {
+                connect(target)
             }
         }
     }
 
     fun connect(profile: TunnelProfile) {
+        connectAttempt(profile, attempt = 0)
+    }
+
+    private fun connectAttempt(profile: TunnelProfile, attempt: Int) {
+        if (!profile.id.startsWith(FREE_PROFILE_PREFIX)) {
+            _freeSelected.value = null
+        }
         viewModelScope.launch {
             try {
                 vpn.connect(
@@ -183,18 +201,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: BackendException) {
                 handleBackendError(profile, e)
             } catch (e: Exception) {
-                if ((e.message ?: "").contains("Premium required", true)) {
+                val message = e.message?.takeIf { it.isNotBlank() } ?: e.javaClass.simpleName
+                if (message.contains("Premium required", true)) {
                     _needPremium.tryEmit(Unit)
                     _messages.tryEmit("Premium required — Upgrade to VortexHub Premium")
                 } else {
-                    _messages.tryEmit(getApplication<Application>().getString(R.string.error_unknown, e.message ?: ""))
-                    if (autoReconnect.value && status.value.state == VpnState.DISCONNECTED) {
-                        kotlinx.coroutines.delay(3000)
-                        connect(profile)
+                    _messages.tryEmit(getApplication<Application>().getString(R.string.error_unknown, message))
+                    if (autoReconnect.value && attempt < MAX_RECONNECT_ATTEMPTS &&
+                        status.value.state == VpnState.DISCONNECTED && isRetryable(message)
+                    ) {
+                        delay(RECONNECT_DELAY_MS)
+                        connectAttempt(profile, attempt + 1)
                     }
                 }
             }
         }
+    }
+
+    private fun isRetryable(message: String): Boolean {
+        val m = message.lowercase()
+        return m.contains("timeout") || m.contains("timed out") ||
+            m.contains("network") || m.contains("unreachable") ||
+            m.contains("connection") || m.contains("handshake")
     }
 
     private fun handleBackendError(profile: TunnelProfile, e: BackendException) {
@@ -262,10 +290,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { store.setAutoReconnect(enabled) }
     }
 
-    fun addProfile(name: String, flag: String, configText: String) {
+    fun addProfile(
+        name: String,
+        flag: String,
+        configText: String,
+        onAdded: ((TunnelProfile) -> Unit)? = null,
+    ) {
         viewModelScope.launch {
-            store.addProfile(name.trim(), flag.trim().ifEmpty { "\uD83C\uDF10" }, configText.trim())
+            val profile = store.addProfile(name.trim(), flag.trim().ifEmpty { "\uD83C\uDF10" }, configText.trim())
+            _freeSelected.value = null
             _messages.tryEmit(getApplication<Application>().getString(R.string.config_imported))
+            onAdded?.invoke(profile)
         }
     }
 
@@ -280,6 +315,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectProfile(profile: TunnelProfile) {
+        _freeSelected.value = null
         viewModelScope.launch { store.setSelectedProfile(profile.id) }
     }
 
@@ -549,6 +585,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (best == null) {
                     _messages.tryEmit("No reachable server found")
                 } else {
+                    _freeSelected.value = null
                     store.setSelectedProfile(best.id)
                     _messages.tryEmit("Fastest: ${best.name} (${results.first { it.first.id == best.id }.second.ms} ms)")
                 }
@@ -567,5 +604,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         URL(url).host.takeIf { it.isNotBlank() } ?: "Subscription"
     } catch (_: Exception) {
         "Subscription"
+    }
+
+    private companion object {
+        const val MAX_RECONNECT_ATTEMPTS = 2
+        const val RECONNECT_DELAY_MS = 3000L
     }
 }

@@ -129,6 +129,13 @@ fun ServersScreen(
     val subHealth by viewModel.subHealth.collectAsStateWithLifecycle()
     val healthChecking by viewModel.healthChecking.collectAsStateWithLifecycle()
     var tab by remember { mutableStateOf("Free") }
+    var tabInitialized by remember { mutableStateOf(false) }
+    LaunchedEffect(profiles) {
+        if (!tabInitialized && profiles.isNotEmpty()) {
+            tabInitialized = true
+            if (profiles.any { !it.configText.trim().equals("warp://auto", true) }) tab = "Personal"
+        }
+    }
     var sortByPing by remember { mutableStateOf(autoSortByLatency) }
     LaunchedEffect(autoSortByLatency) { sortByPing = autoSortByLatency }
     var query by remember { mutableStateOf("") }
@@ -335,7 +342,7 @@ fun ServersScreen(
                     val isFreeConnected = isFreeSelected && status.state == VpnState.CONNECTED
                     Card(
                         onClick = {
-                            val p = TunnelProfile(id = "free-${s.name}", name = s.name, flag = s.flag, configText = s.uri, createdAt = System.currentTimeMillis())
+                            val p = TunnelProfile(id = "free-${s.name}-${s.uri.hashCode()}", name = s.name, flag = s.flag, configText = s.uri, createdAt = System.currentTimeMillis())
                             viewModel.connectFree(p)
                         },
                         shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = if (isFreeSelected) AppTheme.colors.surfaceVariant else CardBg), border = BorderStroke(1.dp, if (isFreeSelected) Orange.copy(alpha = 0.4f) else Border)

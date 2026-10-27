@@ -120,8 +120,9 @@ object SubscriptionParser {
                     add(Entry("$fallbackName WARP $index", "\uD83C\uDF10", "warp://auto"))
                 }
                 config.startsWith("wireguard://", ignoreCase = true) -> {
+                    val wg = ConfigTools.normalizeWireGuard(config) ?: return@forEach
                     index++
-                    add(Entry("$fallbackName WG $index", "\u26A1", config))
+                    add(Entry("$fallbackName WG $index", "\u26A1", wg))
                 }
             }
         }

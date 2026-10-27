@@ -5,15 +5,16 @@ import android.net.TrafficStats
 import android.os.Process
 import android.util.Log
 import com.vpnmobile.app.data.ConfigTools
-import com.vpnmobile.app.data.PremiumManager
 import com.vpnmobile.app.data.ShadowsocksUri
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.util.Diagnostics
 import com.vpnmobile.app.widget.VpnWidgetProvider
+import com.wireguard.android.backend.BackendException as WgBackendException
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Statistics
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.android.backend.Tunnel.State
+import com.wireguard.config.BadConfigException as WgBadConfigException
 import com.wireguard.config.Config
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -121,16 +122,17 @@ class VpnConnectionManager(private val context: Context) {
         splitMode: String = "exclude",
         excludedApps: Set<String> = emptySet(),
     ) {
-        if (profile.name.contains("Premium", true) && !PremiumManager.isPremium.value) {
-            throw Exception("Premium required — Please upgrade to VortexHub Premium")
-        }
-
         val configText = profile.configText.trim()
         if (configText.isEmpty()) {
             throw Exception("Empty configuration — Import a WireGuard config, a Shadowsocks link, or use WARP")
         }
         if (isUnsupportedUri(configText) && !isAutoWarp(configText)) {
-            throw Exception("This protocol is not supported in this build yet. Please use WireGuard, Shadowsocks, or WARP.")
+            val proto = when {
+                configText.startsWith("vless://", true) -> "VLESS"
+                configText.startsWith("vmess://", true) -> "VMess"
+                else -> "Trojan"
+            }
+            throw Exception("$proto is not supported in this build. Use WireGuard, Shadowsocks (ss://) or WARP.")
         }
 
         _status.update { it.copy(state = VpnState.CONNECTING, profileId = profile.id) }
@@ -143,6 +145,7 @@ class VpnConnectionManager(private val context: Context) {
                 else -> connectViaWireGuard(profile, killSwitch, blockIpv6, splitEnabled, splitMode, excludedApps)
             }
         } catch (e: Exception) {
+            Log.e(TAG, "Connection failed: ${e.javaClass.simpleName}", e)
             stopStatsPolling()
             if (ShadowsocksRuntime.state.value != VpnState.DISCONNECTED) {
                 ShadowsocksVpnService.stop(appContext)
@@ -151,6 +154,30 @@ class VpnConnectionManager(private val context: Context) {
             activeEngine = Engine.NONE
             VpnNotification.cancel(appContext)
             _status.value = VpnStatus()
+            if (e is WgBadConfigException) {
+                throw Exception(
+                    "Invalid WireGuard config: ${e.reason.name.lowercase().replace('_', ' ')} (${e.text})",
+                    e,
+                )
+            }
+            if (e is WgBackendException) {
+                val detail = when (e.reason) {
+                    WgBackendException.Reason.VPN_NOT_AUTHORIZED ->
+                        "VPN permission was not granted — tap Connect and allow the VPN request"
+                    WgBackendException.Reason.TUN_CREATION_ERROR ->
+                        "Could not create the VPN tunnel — another VPN may be active"
+                    WgBackendException.Reason.UNABLE_TO_START_VPN ->
+                        "Could not start the VPN service"
+                    WgBackendException.Reason.DNS_RESOLUTION_FAILURE ->
+                        "Could not resolve the server address"
+                    WgBackendException.Reason.TUNNEL_MISSING_CONFIG ->
+                        "WireGuard config is missing"
+                    WgBackendException.Reason.GO_ACTIVATION_ERROR_CODE ->
+                        "WireGuard failed to start (${e.format.joinToString()})"
+                    else -> "VPN connection failed (${e.reason.name})"
+                }
+                throw Exception(detail, e)
+            }
             throw e
         }
     }
@@ -201,7 +228,8 @@ class VpnConnectionManager(private val context: Context) {
         splitMode: String,
         excludedApps: Set<String>,
     ) {
-        var configText = profile.configText
+        var configText = ConfigTools.normalizeWireGuard(profile.configText)
+            ?: throw Exception("Invalid WireGuard config — paste the [Interface] text or a base64 wireguard:// link")
         if (blockIpv6) configText = ConfigTools.applyIpv6Block(configText)
         if (killSwitch) configText = ConfigTools.applyKillSwitch(configText)
         val baseConfig = withContext(Dispatchers.IO) {
