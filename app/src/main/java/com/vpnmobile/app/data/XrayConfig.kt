@@ -1,6 +1,6 @@
 package com.vpnmobile.app.data
 
-import java.net.URLDecoder
+import java.io.ByteArrayOutputStream
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import org.json.JSONArray
@@ -81,6 +81,12 @@ object XrayConfig {
         val root = JSONObject()
         root.put("log", JSONObject().put("loglevel", "warning").put("access", "none"))
         root.put(
+            "dns",
+            JSONObject()
+                .put("tag", "dns-out")
+                .put("servers", JSONArray().put("https://1.1.1.1/dns-query").put("https://8.8.8.8/dns-query"))
+        )
+        root.put(
             "inbounds",
             JSONArray()
                 .put(
@@ -99,12 +105,20 @@ object XrayConfig {
                 )
         )
         root.put(
-            "outbounds",
-            JSONArray()
-                .put(outbound)
-                .put(JSONObject().put("tag", "direct").put("protocol", "freedom"))
-                .put(JSONObject().put("tag", "block").put("protocol", "blackhole"))
+            "routing",
+            JSONObject().put(
+                "rules",
+                JSONArray().put(
+                    JSONObject()
+                        .put("type", "field")
+                        .put("inboundTag", JSONArray().put("tun-in"))
+                        .put("network", "udp")
+                        .put("port", "53")
+                        .put("outboundTag", "dns-out")
+                )
+            )
         )
+        root.put("outbounds", JSONArray().put(outbound))
         return root.toString()
     }
 
@@ -392,10 +406,24 @@ object XrayConfig {
         }
     }
 
-    private fun decode(value: String): String = try {
-        URLDecoder.decode(value, "UTF-8")
-    } catch (_: Exception) {
-        value
+    private fun decode(value: String): String {
+        val bytes = ByteArrayOutputStream()
+        var i = 0
+        while (i < value.length) {
+            val char = value[i]
+            if (char == '%' && i + 2 < value.length) {
+                val byte = value.substring(i + 1, i + 3).toIntOrNull(16)
+                if (byte != null) {
+                    bytes.write(byte)
+                    i += 3
+                    continue
+                }
+            }
+            val encoded = char.toString().toByteArray(Charsets.UTF_8)
+            bytes.write(encoded, 0, encoded.size)
+            i++
+        }
+        return String(bytes.toByteArray(), Charsets.UTF_8)
     }
 
     private fun stringList(value: Any?): String? = when (value) {

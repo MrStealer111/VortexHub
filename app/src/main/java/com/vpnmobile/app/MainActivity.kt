@@ -58,9 +58,6 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (com.vpnmobile.app.vpn.SecurityCheck.isDebuggerAttached() || com.vpnmobile.app.vpn.SecurityCheck.isRooted()) {
-            android.widget.Toast.makeText(this, "Security: Device not secure", android.widget.Toast.LENGTH_LONG).show()
-        }
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }

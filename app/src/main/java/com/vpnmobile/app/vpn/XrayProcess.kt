@@ -87,8 +87,6 @@ object XrayProcess {
 
     fun lastLog(): String = logFile?.let(::readTail).orEmpty()
 
-    fun lastError(): String? = if (isRunning()) null else lastLog().takeIf { it.isNotBlank() }
-
     private fun Process.isAliveCompat(): Boolean = try {
         exitValue()
         false

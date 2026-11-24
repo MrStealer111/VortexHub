@@ -33,7 +33,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.net.HttpURLConnection
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.URL
 
 enum class VpnState { DISCONNECTED, CONNECTING, CONNECTED, BLOCKED }
 
@@ -334,6 +338,32 @@ class VpnConnectionManager(private val context: Context) {
             }
         }
         if (result == VpnState.CONNECTED) {
+            val verified = withContext(Dispatchers.IO) {
+                listOf(
+                    "https://ipwho.is/",
+                    "https://www.google.com/generate_204",
+                    "https://cp.cloudflare.com/generate_204",
+                ).any { endpoint ->
+                    runCatching {
+                        val connection = URL(endpoint).openConnection(
+                            Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", 10808))
+                        ) as HttpURLConnection
+                        try {
+                            connection.connectTimeout = 4_000
+                            connection.readTimeout = 4_000
+                            connection.requestMethod = "GET"
+                            connection.responseCode in 200..399
+                        } finally {
+                            connection.disconnect()
+                        }
+                    }.getOrDefault(false)
+                }
+            }
+            if (!verified) {
+                XrayVpnService.stop(appContext)
+                XrayRuntime.reset()
+                throw Exception("Server connected but internet is unreachable — check the key or server")
+            }
             activeEngine = Engine.XRAY
             _status.update {
                 it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())

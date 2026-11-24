@@ -176,10 +176,28 @@ class XrayConfigTest {
     fun includesLocalSocksInboundForGeoLookup() {
         val inbounds = JSONObject(XrayConfig.build("vless://$uuid@example.com:443")).getJSONArray("inbounds")
         assertEquals(2, inbounds.length())
-        val socks = inbounds.getJSONObject(1)
+        val socks = (0 until inbounds.length()).map { inbounds.getJSONObject(it) }
+            .first { it.getString("tag") == "socks-in" }
         assertEquals("socks", socks.getString("protocol"))
         assertEquals("127.0.0.1", socks.getString("listen"))
         assertEquals(10808, socks.getInt("port"))
+    }
+
+    @Test
+    fun usesLocalDnsForwarder() {
+        val cfg = JSONObject(XrayConfig.build("vless://$uuid@example.com:443"))
+        assertEquals("dns-out", cfg.getJSONObject("dns").getString("tag"))
+        val rule = cfg.getJSONObject("routing").getJSONArray("rules").getJSONObject(0)
+        assertEquals("dns-out", rule.getString("outboundTag"))
+        assertEquals("udp", rule.getString("network"))
+        assertEquals("53", rule.getString("port"))
+    }
+
+    @Test
+    fun keepsLiteralPlusInRealityKey() {
+        val uri = "vless://$uuid@example.com:443?security=reality&pbk=ab+cd%2Fef&sni=example.com"
+        val reality = outbound(uri).getJSONObject("streamSettings").getJSONObject("realitySettings")
+        assertEquals("ab+cd/ef", reality.getString("publicKey"))
     }
 
     @Test

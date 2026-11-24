@@ -51,6 +51,7 @@
 - **Latency Display** — Real-time ping
 
 ### 🎨 UI/UX
+- **Redesigned Home** — compact status hero, session metrics, one server card
 - **Dark Theme** — #0A0A0A background
 - **Accent Themes** — Selectable Orange / Green / Blue brand colors
 - **Glass Buttons** — Frosted glass effect
