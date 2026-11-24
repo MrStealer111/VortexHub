@@ -221,7 +221,6 @@ git push origin v1.4.1
 
 ### 👤 Person Screen
 - Device Hardware ID
-- Free Server URL input
 - Premium upgrade card
 - Settings shortcut
 - Saved configs list
@@ -234,7 +233,6 @@ git push origin v1.4.1
 ### Free Server Update
 1. Edit `app/src/main/assets/server.json`
 2. Rebuild and install
-3. Or set a custom server JSON URL in Profile → Free Server URL (fetched on refresh)
 
 ### Shadowsocks Engine
 `app/libs/tun2socks.aar` is built from [outline-go-tun2socks](https://github.com/OutlineFoundation/outline-go-tun2socks) (Apache-2.0) with Go 1.24.5, gomobile `v0.0.0-20230906132913-2077a3224571`, and Android NDK 27.2. It bundles `libgojni.so` for `arm64-v8a` and `armeabi-v7a`. To regenerate:

@@ -58,30 +58,45 @@ data class AppPalette(
     val accent: Color,
     val success: Color,
     val error: Color,
+    val glassTop: Color,
+    val glassBottom: Color,
+    val glassBorder: Color,
+    val glassBorderSelected: Color,
+    val glow: Color,
 )
 
 val DarkPalette = { accent: Color -> AppPalette(
     bg = Color(0xFF0A0A0A),
-    surface = Color(0xFF1C1C1E),
-    surfaceVariant = Color(0xFF2C2C2E),
+    surface = Color(0x14FFFFFF),
+    surfaceVariant = Color(0x0FFFFFFF),
     text = Color(0xFFFFFFFF),
     textSecondary = Color(0xFF8E8E93),
-    border = Color(0xFF2C2C2E),
+    border = Color(0x33FFFFFF),
     accent = accent,
     success = Color(0xFF00C853),
     error = Color(0xFFFF5252),
+    glassTop = Color(0x26FFFFFF),
+    glassBottom = Color(0x0AFFFFFF),
+    glassBorder = Color(0x33FFFFFF),
+    glassBorderSelected = Color(0x66FF8C00),
+    glow = Color(0x33FF8C00),
 ) }
 
 val LightPalette = { accent: Color -> AppPalette(
     bg = Color(0xFFF4F4F7),
-    surface = Color(0xFFFFFFFF),
-    surfaceVariant = Color(0xFFE9E9EF),
+    surface = Color(0xB3FFFFFF),
+    surfaceVariant = Color(0x80FFFFFF),
     text = Color(0xFF121216),
     textSecondary = Color(0xFF6C6C72),
-    border = Color(0xFFDADAE2),
+    border = Color(0x66FFFFFF),
     accent = accent,
     success = Color(0xFF0A9D4A),
     error = Color(0xFFD93636),
+    glassTop = Color(0xB3FFFFFF),
+    glassBottom = Color(0x66FFFFFF),
+    glassBorder = Color(0x66FFFFFF),
+    glassBorderSelected = Color(0x99FF8C00),
+    glow = Color(0x33FF8C00),
 ) }
 
 val LocalAppPalette = staticCompositionLocalOf { DarkPalette(Color(0xFFFF8C00)) }

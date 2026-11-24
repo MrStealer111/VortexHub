@@ -50,6 +50,7 @@ import com.vpnmobile.app.data.PingTester
 import com.vpnmobile.app.data.TunnelProfile
 import com.vpnmobile.app.ui.MainViewModel
 import com.vpnmobile.app.ui.components.ProfileAvatar
+import com.vpnmobile.app.ui.components.glass
 import com.vpnmobile.app.ui.theme.AppTheme
 import com.vpnmobile.app.vpn.VpnState
 import com.vpnmobile.app.vpn.VpnStatus
@@ -182,7 +183,7 @@ fun HomeScreen(
             if (status.state == VpnState.CONNECTED) {
                 SessionCard(
                     publicIp = geo?.ip,
-                    location = geo?.label ?: connectedProfile?.name ?: "VPN server",
+                    location = geo?.label?.takeUnless { it == geo?.ip } ?: connectedProfile?.name ?: "VPN server",
                     flag = geo?.flag ?: connectedProfile?.flag ?: "\uD83C\uDF10",
                     latency = latency,
                     duration = now - status.connectedAtMillis,
@@ -239,8 +240,7 @@ private fun StatusHero(state: VpnState, onClick: () -> Unit) {
         VpnState.DISCONNECTED -> "Tap to connect"
     }
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-            .background(AppTheme.colors.surface)
+        Modifier.fillMaxWidth().glass(RoundedCornerShape(20.dp))
             .clickable { onClick() }
             .padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -282,8 +282,7 @@ private fun SessionCard(
     tx: Long,
 ) {
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-            .background(AppTheme.colors.surface).padding(16.dp),
+        Modifier.fillMaxWidth().glass(RoundedCornerShape(18.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -308,7 +307,7 @@ private fun SessionCard(
 
 @Composable
 private fun Metric(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier.clip(RoundedCornerShape(12.dp)).background(AppTheme.colors.surfaceVariant).padding(10.dp)) {
+    Column(modifier.glass(RoundedCornerShape(12.dp)).padding(10.dp)) {
         Text(label, color = AppTheme.colors.textSecondary, fontSize = 10.sp)
         Spacer(Modifier.height(2.dp))
         Text(value, color = AppTheme.colors.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
@@ -324,8 +323,7 @@ private fun ServerCard(
     onClick: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-            .background(AppTheme.colors.surface).clickable { onClick() }.padding(14.dp),
+        Modifier.fillMaxWidth().glass(RoundedCornerShape(18.dp)).clickable { onClick() }.padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ProfileAvatar(flag, contentSize = 22.dp)
