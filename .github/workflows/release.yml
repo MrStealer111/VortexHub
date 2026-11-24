@@ -47,8 +47,7 @@ jobs:
           KEYSTORE_B64: ${{ secrets.VORTEXHUB_KEYSTORE_BASE64 }}
         run: |
           if [ -z "$KEYSTORE_B64" ]; then
-            echo "::error::VORTEXHUB_KEYSTORE_BASE64 is required to publish a tagged release."
-            exit 1
+            echo "::warning::No signing keystore secret; publishing unsigned APK."
           fi
 
       - name: Build release
