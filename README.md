@@ -41,7 +41,7 @@
 - **WireGuard** — GoBackend (userspace) ✅
 - **Cloudflare WARP** — auto key generation ✅
 - **Shadowsocks** — Outline / SIP002 links ✅
-- **VLESS / VMess / Trojan** — not supported
+- **VLESS / VMess / Trojan** — Xray-core (TLS, REALITY, WS, gRPC, HTTP/2, xhttp, KCP, QUIC) ✅
 
 ### ⚡ Performance
 - **WARP Integration** — Cloudflare network
@@ -82,7 +82,7 @@
 |---|---|
 | Language | Kotlin 2.1 |
 | UI | Jetpack Compose (Material 3) |
-| VPN Engine | WireGuard GoBackend + Shadowsocks (tun2socks) + Cloudflare WARP |
+| VPN Engine | WireGuard GoBackend + Shadowsocks (tun2socks) + Xray-core + Cloudflare WARP |
 | Camera | CameraX + MLKit Barcode |
 | Billing | Google Play Billing 7.0 |
 | Persistence | DataStore Preferences |
@@ -106,6 +106,7 @@ app/src/main/java/com/vpnmobile/app/
 │   ├── PremiumManager.kt        # Billing
 │   ├── ServerApi.kt             # Free server fetch
 │   ├── ShadowsocksConfig.kt     # ss:// parser
+│   ├── XrayConfig.kt            # vless:// vmess:// trojan:// → Xray JSON
 │   ├── TunnelProfile.kt         # Server model
 │   ├── TunnelStore.kt           # DataStore prefs
 │   ├── WarpGenerator.kt         # WARP key gen
@@ -113,6 +114,8 @@ app/src/main/java/com/vpnmobile/app/
 ├── vpn/
 │   ├── VpnConnectionManager.kt  # VPN lifecycle
 │   ├── ShadowsocksVpnService.kt # Shadowsocks tunnel
+│   ├── XrayVpnService.kt        # VLESS/VMess/Trojan TUN service
+│   ├── XrayProcess.kt           # Bundled Xray-core process
 │   ├── VpnNotification.kt       # Notifications
 │   └── SecurityCheck.kt         # Root/debug detect
 └── ui/
@@ -242,6 +245,26 @@ gomobile bind -target=android -androidapi 24 \
   ./outline/tun2socks ./outline/shadowsocks
 ```
 
+### Xray Engine
+VLESS, VMess and Trojan run on the bundled [Xray-core](https://github.com/XTLS/Xray-core) Android binary. Prebuilt executables are packaged as `app/src/main/jniLibs/<abi>/libxray.so` for `arm64-v8a`, `armeabi-v7a` and `x86_64`; `useLegacyPackaging = true` extracts them to `nativeLibraryDir` at install time. The service passes the TUN fd to Xray on stdin (`XRAY_TUN_FD=0`) and keeps a duplicate fd for the fail-closed kill switch.
+
+To rebuild the binaries (Go 1.27.3 + NDK 27):
+
+```bash
+# arm64-v8a / x86_64 (pure Go)
+GOOS=android GOARCH=arm64 CGO_ENABLED=0 go build \
+  -ldflags="-checklinkname=0" -trimpath -o libxray.so github.com/xtls/xray-core/main
+GOOS=android GOARCH=amd64 CGO_ENABLED=0 go build \
+  -ldflags="-checklinkname=0" -trimpath -o libxray.so github.com/xtls/xray-core/main
+
+# armeabi-v7a needs the NDK clang driver
+CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang \
+CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 go build \
+  -ldflags="-checklinkname=0" -trimpath -o libxray.so github.com/xtls/xray-core/main
+
+$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip libxray.so
+```
+
 ### WARP Setup
 1. Go to Configs → WARP
 2. Generate key pair
@@ -253,6 +276,12 @@ gomobile bind -target=android -androidapi 24 \
 2. Copy the `ss://...` link (or scan its QR code)
 3. Go to Configs → + → Add manual config → Shadowsocks
 4. Paste the link, save and connect
+
+### VLESS / VMess / Trojan Setup
+1. Copy a `vless://`, `vmess://` or `trojan://` link from your panel (or scan its QR code)
+2. Go to Configs → + → Add manual config → choose VLESS, VMess or Trojan
+3. Paste the link, give it a name, then **Save & Connect**
+4. Supported: TLS/REALITY, WS, gRPC, HTTP/2, xhttp, KCP, QUIC; VMess base64 JSON; Trojan TLS by default (`security=none` for plaintext test servers)
 
 ### Subscriptions
 1. Go to Configs → + → Add subscription URL
@@ -279,6 +308,7 @@ gomobile bind -target=android -androidapi 24 \
 - [WireGuard for Android](https://git.zx2c4.com/wireguard-android/) — tunnel backend
 - [Outline tun2socks](https://github.com/OutlineFoundation/outline-go-tun2socks) — Shadowsocks engine (Apache-2.0)
 - [go-tun2socks](https://github.com/eycorsican/go-tun2socks) — TUN stack
+- [Xray-core](https://github.com/XTLS/Xray-core) — VLESS/VMess/Trojan engine (MPL-2.0)
 
 ## 🛡️ Security Features
 

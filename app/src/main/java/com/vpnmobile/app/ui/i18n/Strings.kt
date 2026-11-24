@@ -165,7 +165,7 @@ object Burmese {
         "No subscriptions" to "စာရင်းသွင်း မရှိပါ",
         "Add an https:// subscription URL" to "https:// စာရင်းသွင်း URL ထည့်ပါ",
         "No personal configs" to "ကိုယ်ပိုင် config မရှိပါ",
-        "Tap + to add WireGuard / Shadowsocks / WARP" to "WireGuard / Shadowsocks / WARP ထည့်ရန် + နှိပ်ပါ",
+        "Tap + to add WireGuard, Shadowsocks, VLESS, VMess or Trojan" to "WireGuard, Shadowsocks, VLESS, VMess, Trojan ထည့်ရန် + နှိပ်ပါ",
         "Loading free servers..." to "အခမဲ့ ဆာဗာများ ရယူနေသည်...",
         "Name" to "အမည်",
         "Name (optional)" to "အမည် (မလိုအပ်)",

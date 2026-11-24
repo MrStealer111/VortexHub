@@ -74,6 +74,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -116,6 +117,7 @@ fun HomeScreen(
     onOpenServers: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val context = LocalContext.current
     val status by viewModel.status.collectAsStateWithLifecycle()
     val profiles by viewModel.profiles.collectAsStateWithLifecycle()
     val selectedProfile by viewModel.selectedProfile.collectAsStateWithLifecycle()
@@ -146,12 +148,15 @@ fun HomeScreen(
 
     LaunchedEffect(status.state, connectedProfile?.id) {
         if (status.state == VpnState.CONNECTED) {
+            var first = true
             while (true) {
-                geo = GeoIp.lookup()
+                geo = GeoIp.lookup(context, force = first)
+                first = false
                 delay(60_000)
             }
         } else {
             geo = null
+            GeoIp.clearCache()
         }
     }
 

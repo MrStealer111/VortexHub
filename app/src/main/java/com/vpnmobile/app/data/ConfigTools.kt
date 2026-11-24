@@ -62,6 +62,7 @@ object ConfigTools {
     fun parseEndpoint(configText: String): Pair<String, Int>? {
         val t = configText.trim()
         if (isAutoWarp(t)) return "162.159.192.1" to 2408
+        if (XrayConfig.isXrayUri(t)) return XrayConfig.parseEndpoint(t)
         if (t.startsWith("ss://", true) || t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)) {
             return try {
                 val withoutScheme = t.substringAfter("://")
@@ -109,6 +110,10 @@ object ConfigTools {
     fun endpointPreview(configText: String): String {
         val t = configText.trim()
         if (isAutoWarp(t)) return "Cloudflare"
+        if (XrayConfig.isXrayUri(t)) {
+            val endpoint = XrayConfig.parseEndpoint(t) ?: return "Hidden Endpoint"
+            return "${maskIp(endpoint.first)}:***"
+        }
         if (t.startsWith("ss://", true) || t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)) {
             return try {
                 val withoutScheme = t.substringAfter("://")

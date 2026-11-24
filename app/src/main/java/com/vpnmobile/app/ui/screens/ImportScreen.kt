@@ -2,6 +2,7 @@ package com.vpnmobile.app.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +35,7 @@ import com.vpnmobile.app.ui.theme.AppTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,12 +43,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vpnmobile.app.data.ConfigTools
 import com.vpnmobile.app.data.ShadowsocksUri
 import com.vpnmobile.app.data.TunnelProfile
+import com.vpnmobile.app.data.XrayConfig
 import com.vpnmobile.app.ui.MainViewModel
 import com.vpnmobile.app.ui.effects.GlassPrimaryButton
 
@@ -60,7 +64,7 @@ fun ImportScreen(
 ) {
     var protocol by remember { mutableStateOf("WireGuard") }
     var name by remember { mutableStateOf("") }
-    var uri by remember { mutableStateOf("") }
+    var uri by remember { mutableStateOf(TextFieldValue("")) }
     var error by remember { mutableStateOf<String?>(null) }
 
     fun validate(v: String): String? {
@@ -70,11 +74,24 @@ fun ImportScreen(
             "WARP" -> if (!t.startsWith("warp://")) "WARP config must start with warp://" else null
             "WireGuard" -> if (ConfigTools.normalizeWireGuard(t) == null) "Invalid WireGuard config — paste [Interface] text or a base64 wireguard:// link" else null
             "Shadowsocks" -> if (ShadowsocksUri.parse(t) == null) "Invalid Shadowsocks link — expected ss://method:password@host:port" else null
+            "VLESS", "VMess", "Trojan" -> try {
+                XrayConfig.build(t)
+                null
+            } catch (e: Exception) {
+                e.message ?: "Invalid $protocol link"
+            }
             else -> null
         }
     }
 
-    val canSave = name.isNotBlank() && uri.isNotBlank() && validate(uri) == null
+    val canSave = name.isNotBlank() && uri.text.isNotBlank() && validate(uri.text) == null
+
+    LaunchedEffect(uri.text) {
+        if (uri.text.isNotBlank()) {
+            kotlinx.coroutines.delay(350)
+            error = validate(uri.text)
+        }
+    }
 
     Scaffold(
         containerColor = AppTheme.colors.bg,
@@ -91,10 +108,13 @@ fun ImportScreen(
                 Column(Modifier.padding(16.dp)) {
                     Text("Protocol", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
                     Spacer(Modifier.height(10.dp))
-                    Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                        listOf("WireGuard", "WARP", "Shadowsocks").forEach { p ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf("WireGuard", "WARP", "Shadowsocks", "VLESS", "VMess", "Trojan").forEach { p ->
                             FilterChip(
-                                selected = protocol == p, onClick = { protocol = p; error = validate(uri) },
+                                selected = protocol == p, onClick = { protocol = p; error = validate(uri.text) },
                                 label = { Text(p, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                                 leadingIcon = if (protocol == p) {{ Icon(Icons.Filled.Check, null, Modifier.size(14.dp)) }} else null,
                                 colors = FilterChipDefaults.filterChipColors(selectedContainerColor = AppTheme.colors.accent, selectedLabelColor = Color(0xFFFFFFFF), containerColor = AppTheme.colors.surfaceVariant, labelColor = AppTheme.colors.textSecondary),
@@ -113,6 +133,9 @@ fun ImportScreen(
                         when (protocol) {
                             "Shadowsocks" -> "e.g. Outline Server"
                             "WARP" -> "e.g. WARP"
+                            "VLESS" -> "e.g. My VLESS"
+                            "VMess" -> "e.g. My VMess"
+                            "Trojan" -> "e.g. My Trojan"
                             else -> "e.g. My WireGuard"
                         },
                         color = AppTheme.colors.textSecondary.copy(alpha = 0.7f),
@@ -123,12 +146,13 @@ fun ImportScreen(
             )
             Spacer(Modifier.height(14.dp))
             OutlinedTextField(
-                value = uri, onValueChange = { uri = it; error = validate(it) }, modifier = Modifier.fillMaxWidth(),
+                value = uri, onValueChange = { uri = it }, modifier = Modifier.fillMaxWidth(),
                 label = {
                     Text(
                         when (protocol) {
                             "WARP" -> "WARP Config"
                             "Shadowsocks" -> "Shadowsocks Link"
+                            "VLESS", "VMess", "Trojan" -> "$protocol Link"
                             else -> "WireGuard Config"
                         },
                         color = AppTheme.colors.textSecondary,
@@ -139,6 +163,9 @@ fun ImportScreen(
                         when (protocol) {
                             "WARP" -> "warp://auto"
                             "Shadowsocks" -> "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwYXNzd29yZA@host:port/?outline=1"
+                            "VLESS" -> "vless://uuid@host:443?security=tls&type=ws&path=%2F#name"
+                            "VMess" -> "vmess://eyJ2IjoiMiIsImFkZCI6...}"
+                            "Trojan" -> "trojan://password@host:443?security=tls&type=grpc#name"
                             else -> "[Interface]\nPrivateKey = ...\nAddress = ...\n[Peer]\nPublicKey = ...\nEndpoint = host:port"
                         },
                         color = AppTheme.colors.textSecondary.copy(alpha = 0.7f),
@@ -155,6 +182,9 @@ fun ImportScreen(
                 when (protocol) {
                     "WARP" -> "Paste warp://auto to use Cloudflare WARP with an automatic endpoint."
                     "Shadowsocks" -> "Paste your Shadowsocks link (ss://...) or scan your Outline access key QR code."
+                    "VLESS" -> "Paste a vless:// link. Supports TLS, REALITY, WS, gRPC, HTTP/2 and xhttp."
+                    "VMess" -> "Paste a vmess:// link (base64 JSON) from your panel or subscription."
+                    "Trojan" -> "Paste a trojan:// link. TLS is enabled by default."
                     else -> "Paste your WireGuard config (the [Interface] / [Peer] text) or a wireguard:// link."
                 },
                 style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.textSecondary.copy(alpha = 0.7f), lineHeight = 14.sp,
@@ -165,12 +195,16 @@ fun ImportScreen(
                     val flag = when (protocol) {
                         "WARP" -> "🌐"
                         "Shadowsocks" -> "🔒"
+                        "VLESS" -> "🚀"
+                        "VMess" -> "☁️"
+                        "Trojan" -> "🛡️"
                         else -> "⚡"
                     }
+                    val raw = uri.text.trim()
                     val configText = if (protocol == "WireGuard") {
-                        ConfigTools.normalizeWireGuard(uri.trim()) ?: uri.trim()
+                        ConfigTools.normalizeWireGuard(raw) ?: raw
                     } else {
-                        uri.trim()
+                        raw
                     }
                     viewModel.addProfile(name.trim(), flag, configText) { profile ->
                         onConnect(profile)
@@ -180,7 +214,7 @@ fun ImportScreen(
                 enabled = canSave, modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text("Save & Connect", color = AppTheme.colors.text, fontWeight = FontWeight.Black, fontSize = 15.sp) }
             Spacer(Modifier.height(10.dp))
-            Text("This build supports WireGuard, Shadowsocks and Cloudflare WARP.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4A4A4C), modifier = Modifier.padding(horizontal = 4.dp))
+            Text("Supports WireGuard, Shadowsocks, WARP, VLESS, VMess and Trojan.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4A4A4C), modifier = Modifier.padding(horizontal = 4.dp))
         }
     }
 }

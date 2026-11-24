@@ -640,7 +640,7 @@ private fun AboutSection(onBack: () -> Unit) {
                 }
                 Spacer(Modifier.height(16.dp))
                 listOf(
-                    "WireGuard / Shadowsocks / WARP",
+                    "WireGuard / Shadowsocks / VLESS / VMess / Trojan / WARP",
                     "Subscriptions, QR export, fastest server",
                     "Split tunneling + kill switch",
                     "Auto-reconnect + diagnostics",

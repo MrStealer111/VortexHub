@@ -53,6 +53,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.vpnmobile.app.data.ConfigTools
 import com.vpnmobile.app.data.ShadowsocksUri
 import com.vpnmobile.app.data.TunnelProfile
+import com.vpnmobile.app.data.XrayConfig
 import com.vpnmobile.app.ui.MainViewModel
 import java.util.concurrent.Executors
 
@@ -72,8 +73,13 @@ private fun qrError(raw: String): String? {
         t.startsWith("wireguard://", true) ->
             if (ConfigTools.normalizeWireGuard(t) == null) "Invalid WireGuard link" else null
         t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true) ->
-            "VLESS/VMess/Trojan is not supported in this build"
-        else -> "Unsupported QR code — expected ss://, wireguard:// or warp://"
+            try {
+                XrayConfig.build(t)
+                null
+            } catch (e: Exception) {
+                e.message ?: "Invalid VLESS/VMess/Trojan link"
+            }
+        else -> "Unsupported QR code — expected ss://, wireguard://, warp://, vless://, vmess:// or trojan://"
     }
 }
 
@@ -81,6 +87,9 @@ private fun qrName(raw: String): String = when {
     raw.startsWith("ss://", true) ->
         ShadowsocksUri.parse(raw.trim())?.name?.takeIf { it.isNotBlank() } ?: "QR Import"
     raw.startsWith("wireguard://", true) -> "WireGuard (QR)"
+    XrayConfig.isXrayUri(raw) ->
+        XrayConfig.displayName(raw)?.takeIf { it.isNotBlank() }
+            ?: "${XrayConfig.protocolName(raw) ?: "Xray"} (QR)"
     else -> "WARP (QR)"
 }
 
@@ -144,6 +153,9 @@ fun QrScanScreen(
                                                     val flag = when {
                                                         raw.startsWith("ss://", true) -> "🔒"
                                                         raw.startsWith("wireguard://", true) -> "⚡"
+                                                        raw.startsWith("vless://", true) -> "🚀"
+                                                        raw.startsWith("vmess://", true) -> "☁️"
+                                                        raw.startsWith("trojan://", true) -> "🛡️"
                                                         else -> "🌐"
                                                     }
                                                     val configText = if (raw.startsWith("wireguard://", true)) {

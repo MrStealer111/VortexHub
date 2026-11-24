@@ -124,6 +124,19 @@ object SubscriptionParser {
                     index++
                     add(Entry("$fallbackName WG $index", "\u26A1", wg))
                 }
+                XrayConfig.isXrayUri(config) -> {
+                    if (runCatching { XrayConfig.build(config) }.isFailure) return@forEach
+                    val protocol = XrayConfig.protocolName(config) ?: "Xray"
+                    val flag = when (protocol) {
+                        "VLESS" -> "\uD83D\uDE80"
+                        "VMess" -> "\u2601\uFE0F"
+                        else -> "\uD83D\uDEE1\uFE0F"
+                    }
+                    index++
+                    val name = XrayConfig.displayName(config)?.takeIf { it.isNotBlank() }
+                        ?: "$fallbackName $protocol $index"
+                    add(Entry(name, flag, config))
+                }
             }
         }
         return entries

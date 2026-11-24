@@ -32,7 +32,6 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
@@ -143,7 +142,6 @@ fun ServersScreen(
     var subFilter by remember { mutableStateOf<String?>(null) }
 
     var showPlusMenu by remember { mutableStateOf(false) }
-    var showManualSub by remember { mutableStateOf(false) }
     var showAddSub by remember { mutableStateOf(false) }
     var subUrl by remember { mutableStateOf("") }
     var subName by remember { mutableStateOf("") }
@@ -170,7 +168,7 @@ fun ServersScreen(
                 IconButton(onClick = { profiles.forEach { viewModel.deleteProfile(it) } }, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.Delete, null, tint = AppTheme.colors.text, modifier = Modifier.size(20.dp)) }
                 Box {
                     Box(Modifier.size(36.dp).clip(CircleShape).background(AppTheme.colors.text.copy(alpha = 0.08f)).clickable { showPlusMenu = true }, contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, null, Modifier.size(20.dp), AppTheme.colors.text) }
-                    DropdownMenu(expanded = showPlusMenu, onDismissRequest = { showPlusMenu = false; showManualSub = false }, modifier = Modifier.background(AppTheme.colors.surface)) {
+                    DropdownMenu(expanded = showPlusMenu, onDismissRequest = { showPlusMenu = false }, modifier = Modifier.background(AppTheme.colors.surface)) {
                         DropdownMenuItem(text = { Text("Import from Clipboard", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = {
                             showPlusMenu = false
                             val txt = clipboard.getText()?.text ?: ""
@@ -195,13 +193,7 @@ fun ServersScreen(
                         HorizontalDivider(color = AppTheme.colors.surfaceVariant)
                         DropdownMenuItem(text = { Text("Import subscriptions", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; val clip = clipboard.getText()?.text?.trim().orEmpty(); if (clip.isNotBlank()) viewModel.importSubscriptions(clip) })
                         HorizontalDivider(color = AppTheme.colors.surfaceVariant)
-                        DropdownMenuItem(text = { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("Add manual config", color = AppTheme.colors.text, fontSize = 13.sp); Icon(if (showManualSub) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, Modifier.size(16.dp), AppTheme.colors.text) } }, onClick = { showManualSub = !showManualSub })
-                        if (showManualSub) {
-                            HorizontalDivider(color = AppTheme.colors.surfaceVariant)
-                            listOf("wireguard", "warp", "shadowsocks").forEach { p ->
-                                DropdownMenuItem(text = { Text("Add manual $p", color = AppTheme.colors.text, fontSize = 12.sp) }, onClick = { showPlusMenu = false; showManualSub = false; onImport() })
-                            }
-                        }
+                        DropdownMenuItem(text = { Text("Add manual config", color = AppTheme.colors.text, fontSize = 13.sp) }, onClick = { showPlusMenu = false; onImport() })
                     }
                 }
                 IconButton(onClick = { (onQrScan ?: onImport).invoke() }, modifier = Modifier.size(36.dp)) { Icon(Icons.Filled.QrCodeScanner, null, tint = AppTheme.colors.text, modifier = Modifier.size(20.dp)) }
@@ -505,7 +497,7 @@ fun ServersScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("No personal configs", color = Gray, fontSize = 14.sp)
                         Spacer(Modifier.height(8.dp))
-                        Text("Tap + to add WireGuard / Shadowsocks / WARP", color = Gray, fontSize = 12.sp)
+                        Text("Tap + to add WireGuard, Shadowsocks, VLESS, VMess or Trojan", color = Gray, fontSize = 12.sp)
                     }
                 }
             } else {

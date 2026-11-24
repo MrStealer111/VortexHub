@@ -7,6 +7,7 @@ import android.util.Log
 import com.vpnmobile.app.data.ConfigTools
 import com.vpnmobile.app.data.ShadowsocksUri
 import com.vpnmobile.app.data.TunnelProfile
+import com.vpnmobile.app.data.XrayConfig
 import com.vpnmobile.app.util.Diagnostics
 import com.vpnmobile.app.widget.VpnWidgetProvider
 import com.wireguard.android.backend.BackendException as WgBackendException
@@ -57,7 +58,7 @@ class VpnConnectionManager(private val context: Context) {
     private var statsJob: Job? = null
     private var activeEngine = Engine.NONE
 
-    private enum class Engine { NONE, WIREGUARD, SHADOWSOCKS }
+    private enum class Engine { NONE, WIREGUARD, SHADOWSOCKS, XRAY }
 
     init {
         scope.launch {
@@ -91,11 +92,6 @@ class VpnConnectionManager(private val context: Context) {
         "unknown"
     }
 
-    private fun isUnsupportedUri(text: String): Boolean {
-        val t = text.trim()
-        return t.startsWith("vless://", true) || t.startsWith("vmess://", true) || t.startsWith("trojan://", true)
-    }
-
     private fun isAutoWarp(text: String): Boolean {
         val t = text.trim().lowercase()
         return t == "warp://auto" || t == "warp://" || t.startsWith("vless://warp@")
@@ -124,22 +120,15 @@ class VpnConnectionManager(private val context: Context) {
     ) {
         val configText = profile.configText.trim()
         if (configText.isEmpty()) {
-            throw Exception("Empty configuration — Import a WireGuard config, a Shadowsocks link, or use WARP")
+            throw Exception("Empty configuration — Import a WireGuard config, a Shadowsocks/VLESS/VMess/Trojan link, or use WARP")
         }
-        if (isUnsupportedUri(configText) && !isAutoWarp(configText)) {
-            val proto = when {
-                configText.startsWith("vless://", true) -> "VLESS"
-                configText.startsWith("vmess://", true) -> "VMess"
-                else -> "Trojan"
-            }
-            throw Exception("$proto is not supported in this build. Use WireGuard, Shadowsocks (ss://) or WARP.")
-        }
-
         _status.update { it.copy(state = VpnState.CONNECTING, profileId = profile.id) }
 
         try {
             when {
                 isAutoWarp(configText) -> connectViaWarp(profile, blockIpv6, splitEnabled, splitMode, excludedApps)
+                XrayConfig.isXrayUri(configText) ->
+                    connectViaXray(profile, killSwitch, blockIpv6, splitEnabled, splitMode, excludedApps)
                 ShadowsocksUri.isShadowsocks(configText) ->
                     connectViaShadowsocks(profile, killSwitch, blockIpv6, splitEnabled, splitMode, excludedApps)
                 else -> connectViaWireGuard(profile, killSwitch, blockIpv6, splitEnabled, splitMode, excludedApps)
@@ -150,6 +139,10 @@ class VpnConnectionManager(private val context: Context) {
             if (ShadowsocksRuntime.state.value != VpnState.DISCONNECTED) {
                 ShadowsocksVpnService.stop(appContext)
                 ShadowsocksRuntime.reset()
+            }
+            if (XrayRuntime.state.value != VpnState.DISCONNECTED) {
+                XrayVpnService.stop(appContext)
+                XrayRuntime.reset()
             }
             activeEngine = Engine.NONE
             VpnNotification.cancel(appContext)
@@ -302,6 +295,70 @@ class VpnConnectionManager(private val context: Context) {
         throw Exception(ShadowsocksRuntime.lastError ?: "Shadowsocks connection timed out")
     }
 
+    private suspend fun connectViaXray(
+        profile: TunnelProfile,
+        killSwitch: Boolean,
+        blockIpv6: Boolean,
+        splitEnabled: Boolean,
+        splitMode: String,
+        excludedApps: Set<String>,
+    ) {
+        if (!connectivityCheck()) {
+            throw Exception("No internet connection — Check your network")
+        }
+
+        val endpoint = XrayConfig.parseEndpoint(profile.configText)
+            ?: throw Exception("Invalid VLESS/VMess/Trojan link")
+        val configJson = XrayConfig.build(profile.configText)
+        Log.d(TAG, "Connecting ${XrayConfig.protocolName(profile.configText)} to ${endpoint.first}:${endpoint.second}")
+        Diagnostics.log(TAG, "Connecting Xray to ${endpoint.first}:${endpoint.second} (killSwitch=$killSwitch)")
+
+        XrayRuntime.reset()
+        XrayVpnService.start(
+            appContext,
+            profile.name,
+            configJson,
+            endpoint.first,
+            endpoint.second,
+            splitEnabled,
+            splitMode,
+            excludedApps,
+            killSwitch,
+            blockIpv6,
+        )
+
+        val result = withTimeoutOrNull(25_000) {
+            XrayRuntime.state.first {
+                it == VpnState.CONNECTED || it == VpnState.BLOCKED ||
+                    (it == VpnState.DISCONNECTED && XrayRuntime.lastError != null)
+            }
+        }
+        if (result == VpnState.CONNECTED) {
+            activeEngine = Engine.XRAY
+            _status.update {
+                it.copy(state = VpnState.CONNECTED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
+            }
+            VpnNotification.show(appContext, profile.name, 0, 0, true)
+            startXrayStatsPolling(profile.name)
+            Log.d(TAG, "Xray tunnel connected")
+            return
+        }
+        if (result == VpnState.BLOCKED || (killSwitch && result == null)) {
+            activeEngine = Engine.XRAY
+            XrayRuntime.setBlocked()
+            _status.update {
+                it.copy(state = VpnState.BLOCKED, profileId = profile.id, connectedAtMillis = System.currentTimeMillis())
+            }
+            VpnNotification.show(appContext, profile.name, 0, 0, false, blocked = true)
+            VpnNotification.showKillSwitchAlert(appContext, profile.name)
+            startXrayStatsPolling(profile.name)
+            Diagnostics.log(TAG, "Xray blocked by kill switch")
+            return
+        }
+        XrayVpnService.stop(appContext)
+        throw Exception(XrayRuntime.lastError ?: "VLESS/VMess/Trojan connection timed out")
+    }
+
     private fun applySplitTunnel(
         config: Config,
         splitEnabled: Boolean,
@@ -335,6 +392,12 @@ class VpnConnectionManager(private val context: Context) {
         if (shadowsocksActive) {
             ShadowsocksVpnService.stop(appContext)
             ShadowsocksRuntime.reset()
+        }
+        val xrayActive = activeEngine == Engine.XRAY ||
+            XrayRuntime.state.value != VpnState.DISCONNECTED
+        if (xrayActive) {
+            XrayVpnService.stop(appContext)
+            XrayRuntime.reset()
         }
         try {
             withContext(Dispatchers.IO) {
@@ -377,6 +440,35 @@ class VpnConnectionManager(private val context: Context) {
         statsJob = scope.launch {
             while (isActive) {
                 when (ShadowsocksRuntime.state.value) {
+                    VpnState.CONNECTED -> {
+                        val rx = (TrafficStats.getUidRxBytes(uid).takeIf { it >= 0 }?.minus(baseRx) ?: 0L).coerceAtLeast(0L)
+                        val tx = (TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 }?.minus(baseTx) ?: 0L).coerceAtLeast(0L)
+                        _status.update { it.copy(rxBytes = rx, txBytes = tx) }
+                        VpnNotification.show(appContext, profileName, rx, tx, true)
+                    }
+                    VpnState.BLOCKED -> {
+                        _status.update { it.copy(state = VpnState.BLOCKED) }
+                        VpnNotification.show(appContext, profileName, 0, 0, false, blocked = true)
+                    }
+                    else -> {
+                        VpnNotification.cancel(appContext)
+                        _status.value = VpnStatus()
+                        break
+                    }
+                }
+                delay(2_000)
+            }
+        }
+    }
+
+    private fun startXrayStatsPolling(profileName: String) {
+        stopStatsPolling()
+        val uid = Process.myUid()
+        val baseRx = TrafficStats.getUidRxBytes(uid).takeIf { it >= 0 } ?: 0L
+        val baseTx = TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 } ?: 0L
+        statsJob = scope.launch {
+            while (isActive) {
+                when (XrayRuntime.state.value) {
                     VpnState.CONNECTED -> {
                         val rx = (TrafficStats.getUidRxBytes(uid).takeIf { it >= 0 }?.minus(baseRx) ?: 0L).coerceAtLeast(0L)
                         val tx = (TrafficStats.getUidTxBytes(uid).takeIf { it >= 0 }?.minus(baseTx) ?: 0L).coerceAtLeast(0L)
